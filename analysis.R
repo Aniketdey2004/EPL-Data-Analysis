@@ -27,7 +27,7 @@ str(mydata)
 colSums(is.na(mydata))
 
 
-#filling na values of integer with 0 and chr with D
+#filling na values of integer with 0
 mydata$HTH.Goals[is.na(mydata$HTH.Goals)]<-0
 mydata$HTA.Goals[is.na(mydata$HTA.Goals)]<-0
 mydata$H.Shots[is.na(mydata$H.Shots)]<-0
@@ -48,4 +48,32 @@ mydata$A.Corners[is.na(mydata$A.Corner)]<-0
 colSums(is.na(mydata))
 
 #which team played the most home matches 
+home<-mydata %>% count(HomeTeam,name="HomeMatches") %>% arrange(desc(HomeMatches))
+home
+ggplot(home, aes(x = reorder(HomeTeam, HomeMatches), y = HomeMatches)) + 
+  geom_bar(stat = "identity", fill = "steelblue") + 
+  coord_flip()+
+  labs(title = "Number of Matches Played by Home Teams",
+       x = "Home Team",
+       y = "Number of Matches") 
 
+#which team played most away matches
+away<-mydata %>% count(AwayTeam,name="AwayMatches") %>% arrange(desc(AwayMatches))
+away
+ggplot(away, aes(x = reorder(AwayTeam, AwayMatches), y = AwayMatches)) + 
+  geom_bar(stat = "identity", fill = "orange") + 
+  coord_flip()+
+  labs(title = "Number of Matches Played by Away Teams",
+       x = "Home Team",
+       y = "Number of Matches") 
+
+
+#which team played the most matches"
+totalmatches<-full_join(home,away,by=c("HomeTeam"="AwayTeam")) %>% mutate(TotalMatches=HomeMatches+AwayMatches) %>% arrange(desc(TotalMatches))
+totalmatches
+ggplot(totalmatches, aes(x = reorder(HomeTeam, TotalMatches), y = TotalMatches)) + 
+  geom_bar(stat = "identity", fill = "purple") + 
+  coord_flip()+
+  labs(title = "Number of Matches Played by Teams",
+       x = "Teams",
+       y = "Number of Matches") 
