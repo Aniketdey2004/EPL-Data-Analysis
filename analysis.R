@@ -1,9 +1,10 @@
-install.packages(c("dplyr", "ggplot2", "ggrepel", "tidyr"))
+install.packages(c("dplyr", "ggplot2", "ggrepel", "tidyr","forcats"))
 
 library(dplyr)
 library(ggplot2)
 library(ggrepel) 
 library(tidyr)
+library(forcats)
 
 mydata<-read.csv("England_csv.csv")
 head(mydata,10)
