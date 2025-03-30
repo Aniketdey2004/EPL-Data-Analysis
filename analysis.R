@@ -1,5 +1,12 @@
+
+
+install.packages(c("dplyr", "ggplot2", "ggrepel", "tidyr","forcats"))
+
 library(dplyr)
 library(ggplot2)
+library(ggrepel) 
+library(tidyr)
+library(forcats)
 
 mydata<-read.csv("England_csv.csv")
 head(mydata,10)
@@ -81,8 +88,7 @@ ggplot(totalmatches, aes(x = reorder(HomeTeam, TotalMatches), y = TotalMatches))
 
 colnames(mydata)
 
-<<<<<<< HEAD
-=======
+
 goal_analysis <- mydata %>%
   group_by(Team = HomeTeam) %>%
   summarise(
@@ -122,4 +128,4 @@ home_performance <- mydata %>%
 home_performance
 
 
->>>>>>> 5b8bcaa0cdbf2688b98e29f5848e077641b68995
+
