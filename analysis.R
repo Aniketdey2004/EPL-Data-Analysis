@@ -107,7 +107,7 @@ goal_analysis <- mydata %>%
     GoalDifference_Away = AwayGoalsScored - AwayGoalsConceded,
     HomeAdvantage = GoalDifference_Home - GoalDifference_Away
   )
-
+goal_analysis
 
 home_performance <- mydata %>%
   group_by(HomeTeam) %>%
@@ -122,26 +122,4 @@ home_performance <- mydata %>%
   filter(TotalMatches >= 100)
 home_performance
 
-goal_analysis <- mydata %>%
-  group_by(Team = HomeTeam) %>%
-  summarise(
-    HomeGoalsScored = mean(FTHG, na.rm = TRUE),
-    HomeGoalsConceded = mean(FTAG, na.rm = TRUE),
-    HomeGames = n()
-  ) %>%
-  left_join(
-    mydata %>%
-      group_by(Team = AwayTeam) %>%
-      summarise(
-        AwayGoalsScored = mean(FTAG, na.rm = TRUE),
-        AwayGoalsConceded = mean(FTHG, na.rm = TRUE),
-        AwayGames = n()
-      ),
-    by = "Team"
-  ) %>%
-  filter(HomeGames >= 100 & AwayGames >= 100) %>%  # Only established teams
-  mutate(
-    GoalDifference_Home = HomeGoalsScored - HomeGoalsConceded,
-    GoalDifference_Away = AwayGoalsScored - AwayGoalsConceded,
-    HomeAdvantage = GoalDifference_Home - GoalDifference_Away
-goal_analysis
+
