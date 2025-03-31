@@ -1,12 +1,13 @@
 
 
-install.packages(c("dplyr", "ggplot2", "ggrepel", "tidyr","forcats"))
+install.packages(c("dplyr", "ggplot2", "ggrepel", "tidyr","forcats","knitr"))
 
 library(dplyr)
 library(ggplot2)
 library(ggrepel) 
 library(tidyr)
 library(forcats)
+library(knitr)
 
 mydata<-read.csv("England_csv.csv")
 head(mydata,10)
@@ -133,4 +134,104 @@ goal_labels <- c("Home Goals", "Away Goals")
 barplot(avg_goals, names.arg = goal_labels, col = c("blue", "red"),
         main = "Average Home vs. Away Goals per Match",
         ylab = "Average Goals", ylim = c(0, max(avg_goals) + 0.5))
+
+
+card_analysis_plot <- function(mydata) {
+  
+  card_summary <- mydata %>%
+    group_by(Team = HomeTeam) %>%
+    summarise(
+      HomeYellowCards = mean(H.Yellow, na.rm = TRUE),
+      HomeRedCards = mean(H.Red, na.rm = TRUE)
+    ) %>%
+    left_join(
+      mydata %>%
+        group_by(Team = AwayTeam) %>%
+        summarise(
+          AwayYellowCards = mean(A.Yellow, na.rm = TRUE),
+          AwayRedCards = mean(A.Red, na.rm = TRUE)
+        ),
+      by = "Team"
+    )
+  
+  cat("\nAverage Yellow and Red Cards Received by EPL Teams (Home & Away):\n")
+  print(kable(card_summary, digits = 2, caption = "Average Yellow and Red Cards per Match"))
+  
+  card_summary_long <- card_summary %>%
+    pivot_longer(cols = -Team, names_to = "CardType", values_to = "Count")
+  
+  ggplot(card_summary_long, aes(x = reorder(Team, Count), y = Count, fill = CardType)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    coord_flip() +  # Flip coordinates for better readability
+    labs(
+      title = "Average Yellow and Red Cards Received by EPL Teams (Home & Away)",
+      x = "Team",
+      y = "Average Number of Cards"
+    ) +
+    theme_minimal() +
+    scale_fill_manual(values = c("yellow", "red", "lightyellow", "lightcoral")) +
+    theme(axis.text.y = element_text(size = 8))
+}
+
+card_analysis_plot(mydata)
+
+unique(mydata$Referee)
+referee_card_analysis <- function(mydata) {
+  
+  referee_summary <- mydata %>%
+    group_by(Referee) %>%
+    summarise(
+      AvgYellowPerMatch = mean(H.Yellow, na.rm = TRUE) + mean(A.Yellow, na.rm = TRUE),
+      AvgRedPerMatch = mean(H.Red, na.rm = TRUE) + mean(A.Red, na.rm = TRUE),
+      Matches = n()
+    ) %>%
+    arrange(desc(AvgYellowPerMatch), desc(AvgRedPerMatch))
+  
+  cat("\nTotal Yellow and Red Cards Given by Each Referee:\n")
+  print(referee_summary, n = Inf)
+}
+
+referee_card_analysis(mydata)
+
+comeback_count <- function(mydata) {
+  
+  comeback_summary <- mydata %>%
+    filter((HT.Result == "A" & FT.Result == "H") | (HT.Result == "H" & FT.Result == "A")) %>%
+    mutate(
+      WinningTeam = ifelse(FT.Result == "H", HomeTeam, AwayTeam)
+    ) %>%
+    group_by(WinningTeam) %>%
+    summarise(
+      ComebackWins = n()
+    ) %>%
+    arrange(desc(ComebackWins))
+  
+  cat("\nNumber of Comeback Wins by Each Team (Trailing at Half Time but Winning at Full Time):\n")
+  kable(comeback_summary, digits = 0, caption = "Comeback Wins by Teams")
+}
+
+comeback_count(mydata)
+
+foul_win_analysis <- function(mydata) {
+  
+  foul_summary <- mydata %>%
+    mutate(
+      WinningTeam = ifelse(FT.Result == "H", HomeTeam, AwayTeam),
+      LosingTeam = ifelse(FT.Result == "H", AwayTeam, HomeTeam),
+      WinningFouls = ifelse(FT.Result == "H", H.Fouls, A.Fouls),
+      LosingFouls = ifelse(FT.Result == "H", A.Fouls, H.Fouls),
+      MoreFouls = ifelse(WinningFouls > LosingFouls, "More Fouls", "Less Fouls")
+    ) %>%
+    group_by(WinningTeam, MoreFouls) %>%
+    summarise(
+      Count = n()
+    ) %>%
+    pivot_wider(names_from = MoreFouls, values_from = Count, values_fill = 0) %>%
+    arrange(desc(`More Fouls` + `Less Fouls`))
+  
+  cat("\nFoul Analysis: Do Winning Teams Commit More or Fewer Fouls?\n")
+  kable(foul_summary, digits = 0, caption = "Winning Teams with More or Fewer Fouls")
+}
+
+foul_win_analysis(mydata)
 
