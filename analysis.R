@@ -130,7 +130,6 @@ home_performance
 avg_goals <- c(mean(mydata$HTA.Goals, na.rm = TRUE), mean(mydata$FTA.Goals, na.rm = TRUE))
 goal_labels <- c("Home Goals", "Away Goals")
 
-# Create bar plot using base R
 barplot(avg_goals, names.arg = goal_labels, col = c("blue", "red"),
         main = "Average Home vs. Away Goals per Match",
         ylab = "Average Goals", ylim = c(0, max(avg_goals) + 0.5))
