@@ -416,8 +416,9 @@ foul_win_analysis(mydata)
 
 
 #seasonal goal trends of different teams
-selected_teams <- c("Arsenal", "Chelsea", "Liverpool", "Man United", "Man City", "Tottenham")
+selected_teams <- c("Arsenal", "Chelsea", "Liverpool", "Man United", "Man City", "Tottenham","Newcastle","Everton","Aston Villa","West Ham")
 
+#shows how top 10 teams have dominated over the years
 seasonal_performance <- mydata %>%
   mutate(SeasonStart = as.numeric(substr(Season, 1, 4))) %>%
   filter(HomeTeam %in% selected_teams | AwayTeam %in% selected_teams) %>%
@@ -440,7 +441,7 @@ seasonal_performance <- mydata %>%
   group_by(Team, SeasonStart) %>%
   summarise(
     AvgPoints = mean(Points),
-    AvgGoalDiff = mean(GoalDifference),
+    AvgGoalDiff = abs(mean(GoalDifference)),
     TotalWins = sum(Points == 3),
     Matches = n()
   ) %>%
@@ -464,4 +465,53 @@ ggplot(seasonal_performance, aes(x = SeasonStart, y = AvgGoalDiff)) +
     legend.position = "none"
   )
 
-#win percentage trends across seasons
+team_performance <- function(team_name, data = seasonal_performance) {
+  if (!(team_name %in% unique(data$Team))) {
+    stop(paste("Team not found. Available teams:", 
+               paste(unique(data$Team), collapse = ", ")))
+  }
+  team_colors <- c(
+    "Arsenal" = "#EF0107",
+    "Chelsea" = "#034694",
+    "Liverpool" = "#C8102E",
+    "Man United" = "#DA291C",
+    "Man City" = "#6CABDD",
+    "Tottenham" = "#132257"
+  )
+  
+  team_data <- data %>% 
+    filter(Team == team_name)
+  
+  ggplot(team_data, aes(x = SeasonStart)) +
+    geom_area(aes(y = AvgGoalDiff), 
+              fill = team_colors[team_name], 
+              alpha = 0.3) +
+    geom_line(aes(y = AvgPoints * 2),  # Scaled for dual-axis
+              color = team_colors[team_name], 
+              linewidth = 1.5) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+    geom_hline(yintercept = 2 * 1.8, linetype = "dashed", color = "gold") +  # UCL threshold
+    
+    scale_y_continuous(
+      name = "Average Goal Difference",
+      sec.axis = sec_axis(~./2, name = "Average Points per Match")
+    ) +
+    
+    
+    labs(
+      title = paste(team_name, "Performance Over Time"),
+      subtitle = "Goal Difference (area) vs. Points per Match (line)",
+      x = "Season Start Year",
+      caption = paste("Data from", min(data$SeasonStart), "-", max(data$SeasonStart))
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 16, color = team_colors[team_name]),
+      axis.title.y.right = element_text(color = team_colors[team_name]),
+      axis.text.y.right = element_text(color = team_colors[team_name])
+    )
+}
+
+team_performance("Arsenal")
+team_performance("Man City")
+
