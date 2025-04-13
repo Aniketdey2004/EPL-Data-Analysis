@@ -89,20 +89,20 @@ ggplot(totalmatches, aes(x = reorder(HomeTeam, TotalMatches), y = TotalMatches))
 
 colnames(mydata)
 
-
+#finding the goal analysis of teams 
 goal_analysis <- mydata %>%
   group_by(Team = HomeTeam) %>%
   summarise(
-    HomeGoalsScored = mean(FTH.Goals, na.rm = TRUE),
-    HomeGoalsConceded = mean(FTA.Goals, na.rm = TRUE),
+    HomeGoalsScored = sum(FTH.Goals, na.rm = TRUE),
+    HomeGoalsConceded = sum(FTA.Goals, na.rm = TRUE),
     HomeGames = n()
   ) %>%
   left_join(
     mydata %>%
       group_by(Team = AwayTeam) %>%
       summarise(
-        AwayGoalsScored = mean(FTA.Goals, na.rm = TRUE),
-        AwayGoalsConceded = mean(FTH.Goals, na.rm = TRUE),
+        AwayGoalsScored = sum(FTA.Goals, na.rm = TRUE),
+        AwayGoalsConceded = sum(FTH.Goals, na.rm = TRUE),
         AwayGames = n()
       ),
     by = "Team"
@@ -111,10 +111,34 @@ goal_analysis <- mydata %>%
   mutate(
     GoalDifference_Home = HomeGoalsScored - HomeGoalsConceded,
     GoalDifference_Away = AwayGoalsScored - AwayGoalsConceded,
-    HomeAdvantage = GoalDifference_Home - GoalDifference_Away
   )
-goal_analysis
+View(goal_analysis)
 
+goal_analysis<-goal_analysis%>%
+  mutate(
+    TotalGoals=HomeGoalsScored +AwayGoalsScored 
+  )%>%
+  arrange(desc(TotalGoals))
+View(goal_analysis)
+
+
+
+topscoringteams <- goal_analysis %>%
+  slice_head(n = 10)
+topscoringteams
+#top 10 most scoring teams in the datasets time frame are Man United,Arsenal,Liverpool,chelsea, etc..
+
+ggplot(topscoringteams, aes(x = reorder(Team, TotalGoals), y = TotalGoals)) +
+  geom_bar(stat = "identity", fill = "#ff6361") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Most Scoring Teams",
+    x = "Team",
+    y = "Total Goals Scored"
+  ) +
+  theme_minimal()
+
+#analysing the home performance of teams
 home_performance <- mydata %>%
   group_by(HomeTeam) %>%
   summarise(
@@ -122,11 +146,97 @@ home_performance <- mydata %>%
     Draws = sum(FT.Result == "D"),
     Losses = sum(FT.Result == "A"),
     TotalMatches = n(),
-    WinRate = Wins / TotalMatches
+    WinRate = Wins / TotalMatches*100
   ) %>%
-  arrange(desc(Wins)) %>%
+  arrange(desc(WinRate)) %>%
   filter(TotalMatches >= 100)
 home_performance
+#teams like Man United,arsenal and liverpool are showing the highest win percentage in home fields
+
+ggplot(home_performance, aes(x = reorder(HomeTeam,WinRate), y = WinRate)) + 
+  geom_bar(stat = "identity", fill = "#63c78f") + 
+  coord_flip()+
+  labs(title = "Home win Rate of Teams",
+       x = "Teams",
+       y = "Win Rate %") 
+
+
+#analysing the away performance of teams
+away_perform<-mydata %>%
+  group_by(AwayTeam)%>%
+  summarise(
+    Wins=sum(FT.Result=="A"),
+    Draws=sum(FT.Result=="D"),
+    Losses=sum(FT.Result=="H"),
+    TotalMatches=n(),
+    WinRate=Wins/TotalMatches*100
+  )%>%filter(TotalMatches>=100)%>%
+  arrange(desc(WinRate))
+away_perform
+#Man United,Chelsea and Arsenal are showing the highest win percentage in away fields
+
+ggplot(away_perform, aes(x = reorder(AwayTeam,WinRate), y = WinRate)) + 
+  geom_bar(stat = "identity", fill = "#63c78f") + 
+  coord_flip()+
+  labs(title = "Away win Rate of Teams",
+       x = "Teams",
+       y = "Win Rate %") 
+
+
+
+#analysing the overall performance of teams
+overall_analysis<-merge(home_performance,away_perform,by.x = "HomeTeam",by.y="AwayTeam")
+overall_analysis
+most_successfull <- overall_analysis %>%
+  mutate(
+    Team = HomeTeam,
+    TotalWins = Wins.x + Wins.y,
+    TotalMatches = TotalMatches.x + TotalMatches.y
+  ) %>%
+  select(Team, TotalWins, TotalMatches)
+most_successfull
+most_successfull<-most_successfull %>%
+  mutate(
+    WinRate=TotalWins/TotalMatches*100
+  ) %>%arrange(desc(WinRate)) 
+most_successfull
+#the most successfull teams in the datasets time frame with highest win percentage are Man United,Arsenal,Liverpool etc
+
+
+most_successfull_top10 <- most_successfull %>%slice_head(n = 10)
+
+ggplot(most_successfull_top10, aes(x = reorder(Team, WinRate), y = WinRate)) +
+  geom_bar(stat = "identity", fill = "#4e79a7") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Most Successful Teams by Win Rate",
+    x = "Team",
+    y = "Win Rate (%)"
+  ) +
+  theme_minimal()
+
+
+
+better_performance<-select(overall_analysis,Team=HomeTeam,HomeWin=WinRate.x,AwayWin=WinRate.y)
+better_performance
+
+better_performance$homeAdv<-better_performance$HomeWin-better_performance$AwayWin
+better_performance<-arrange(better_performance,desc(homeAdv))
+better_performance
+#teams Fulham,Stoke and NewCastle have a higher chance of winning home matches than away matches
+#we can also see almost all teams have a greater chance of winning in Home than in Away  or we can say they find it comfortable
+
+
+ggplot(overall_analysis, aes(x = reorder(Team,homeAdv), y = homeAdv)) + 
+  geom_bar(stat = "identity", fill = "#9d4edd") + 
+  coord_flip()+
+  labs(title = "Teams with greater home advantage",
+       x = "Teams",
+       y = "Home Advantage") 
+
+
+
+
 
 avg_goals <- c(mean(mydata$HTA.Goals, na.rm = TRUE), mean(mydata$FTA.Goals, na.rm = TRUE))
 goal_labels <- c("Home Goals", "Away Goals")
