@@ -345,3 +345,53 @@ foul_win_analysis <- function(mydata) {
 
 foul_win_analysis(mydata)
 
+
+#win loose rate of teams in different seasons
+selected_teams <- c("Arsenal", "Chelsea", "Liverpool", "Man United", "Man City", "Tottenham")
+
+seasonal_performance <- mydata %>%
+  mutate(SeasonStart = as.numeric(substr(Season, 1, 4))) %>%
+  filter(HomeTeam %in% selected_teams | AwayTeam %in% selected_teams) %>%
+  mutate(
+    Team = case_when(
+      HomeTeam %in% selected_teams ~ HomeTeam,
+      AwayTeam %in% selected_teams ~ AwayTeam,
+      TRUE ~ NA_character_
+    ),
+    Points = case_when(
+      FT.Result == "H" & Team == HomeTeam ~ 3,
+      FT.Result == "A" & Team == AwayTeam ~ 3,
+      FT.Result == "D" ~ 1,
+      TRUE ~ 0
+    ),
+    GoalDifference = ifelse(Team == HomeTeam, 
+                            FTH.Goals - FTA.Goals, 
+                            FTA.Goals - FTH.Goals)
+  ) %>%
+  group_by(Team, SeasonStart) %>%
+  summarise(
+    AvgPoints = mean(Points),
+    AvgGoalDiff = mean(GoalDifference),
+    TotalWins = sum(Points == 3),
+    Matches = n()
+  ) %>%
+  filter(Matches >= 30) 
+
+
+#seasonal goal difference trends
+ggplot(seasonal_performance, aes(x = SeasonStart, y = AvgGoalDiff)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_line(aes(color = Team), linewidth = 1) +
+  geom_point(aes(color = Team), size = 2) +
+  facet_wrap(~Team, ncol = 2) +
+  labs(
+    title = "Seasonal Goal Difference Trends",
+    x = "Season Start Year",
+    y = "Average Goal Difference per Match"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold"),
+    legend.position = "none"
+  )
+
