@@ -17,6 +17,7 @@ View(mydata)
 #checking the dimesions of our data
 dim(mydata)
 
+
 #checking the datatypes of the variables
 str(mydata)
 
