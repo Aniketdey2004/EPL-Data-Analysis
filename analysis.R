@@ -346,7 +346,7 @@ foul_win_analysis <- function(mydata) {
 foul_win_analysis(mydata)
 
 
-#win loose rate of teams in different seasons
+#seasonal goal trends of different teams
 selected_teams <- c("Arsenal", "Chelsea", "Liverpool", "Man United", "Man City", "Tottenham")
 
 seasonal_performance <- mydata %>%
