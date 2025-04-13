@@ -249,44 +249,83 @@ barplot(avg_goals, names.arg = goal_labels, col = c("blue", "red"),
 
 #card analysis of each team
 #plotting is not correct
-card_analysis_plot <- function(mydata) {
+card_analysis_table <- function(mydata) {
   
-  card_summary <- mydata %>%
+  # Home stats
+  home_cards <- mydata %>%
     group_by(Team = HomeTeam) %>%
     summarise(
       HomeYellowCards = mean(H.Yellow, na.rm = TRUE),
       HomeRedCards = mean(H.Red, na.rm = TRUE)
-    ) %>%
-    left_join(
-      mydata %>%
-        group_by(Team = AwayTeam) %>%
-        summarise(
-          AwayYellowCards = mean(A.Yellow, na.rm = TRUE),
-          AwayRedCards = mean(A.Red, na.rm = TRUE)
-        ),
-      by = "Team"
     )
   
-  cat("\nAverage Yellow and Red Cards Received by EPL Teams (Home & Away):\n")
-  print(kable(card_summary, digits = 2, caption = "Average Yellow and Red Cards per Match"))
+  # Away stats
+  away_cards <- mydata %>%
+    group_by(Team = AwayTeam) %>%
+    summarise(
+      AwayYellowCards = mean(A.Yellow, na.rm = TRUE),
+      AwayRedCards = mean(A.Red, na.rm = TRUE)
+    )
   
-  card_summary_long <- card_summary %>%
-    pivot_longer(cols = -Team, names_to = "CardType", values_to = "Count")
+  # Overall (home + away combined) stats
+  overall_cards <- mydata %>%
+    select(HomeTeam, AwayTeam, H.Yellow, A.Yellow, H.Red, A.Red) %>%
+    mutate(
+      HomeYellow = H.Yellow,
+      AwayYellow = A.Yellow,
+      HomeRed = H.Red,
+      AwayRed = A.Red
+    ) %>%
+    pivot_longer(cols = c(HomeTeam, AwayTeam), names_to = "Type", values_to = "Team") %>%
+    mutate(
+      YellowCards = ifelse(Type == "HomeTeam", HomeYellow, AwayYellow),
+      RedCards = ifelse(Type == "HomeTeam", HomeRed, AwayRed)
+    ) %>%
+    group_by(Team) %>%
+    summarise(
+      AvgYellowCards = mean(YellowCards, na.rm = TRUE),
+      AvgRedCards = mean(RedCards, na.rm = TRUE)
+    )
   
-  ggplot(card_summary_long, aes(x = reorder(Team, Count), y = Count, fill = CardType)) +
-    geom_bar(stat = "identity", position = "dodge") +
+  # Merge all together
+  card_summary <- full_join(home_cards, away_cards, by = "Team") %>%
+    left_join(overall_cards, by = "Team") %>%
+    relocate(Team)
+  
+  # Show result
+  cat("\nAverage Yellow and Red Cards Received by EPL Teams (Home, Away & Overall):\n")
+  print(kable(card_summary, digits = 2, caption = "Card Summary by Team (Home, Away & Overall Averages)"))
+  
+  return(card_summary)
+}
+View(card_analysis_table(mydata))
+
+
+dirty_play_plot <- function(card_summary) {
+  # Calculate Dirty Play Score
+  card_summary <- card_summary %>%
+    mutate(DirtyPlayScore = AvgYellowCards + 2 * AvgRedCards) %>%
+    arrange(desc(DirtyPlayScore))
+  
+  # Select top 10 dirtiest teams
+  top_10_dirty_teams <- card_summary %>%
+    head(10)
+  
+  # Plot the top 10 dirtiest teams
+  ggplot(top_10_dirty_teams, aes(x = reorder(Team, DirtyPlayScore), y = DirtyPlayScore, fill = Team)) +
+    geom_bar(stat = "identity") +
     coord_flip() +  # Flip coordinates for better readability
     labs(
-      title = "Average Yellow and Red Cards Received by EPL Teams (Home & Away)",
+      title = "Top 10 Dirtiest Teams Based on Dirty Play Score",
       x = "Team",
-      y = "Average Number of Cards"
+      y = "Dirty Play Score"
     ) +
     theme_minimal() +
-    scale_fill_manual(values = c("yellow", "red", "lightyellow", "lightcoral")) +
-    theme(axis.text.y = element_text(size = 8))
+    theme(axis.text.y = element_text(size = 10)) +
+    scale_fill_brewer(palette = "Set3")
 }
+dirty_play_plot(card_analysis_table(mydata))
 
-card_analysis_plot(mydata)
 
 
 #referee card analysis
