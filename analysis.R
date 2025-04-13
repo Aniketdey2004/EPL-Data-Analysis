@@ -306,6 +306,7 @@ referee_card_analysis <- function(mydata) {
   
   cat("\nAverage Yellow and Red Cards Given by Each Referee:\n")
   print(referee_summary, n = Inf)
+  return(referee_summary)
 }
 
 referee_card_analysis(mydata)
