@@ -227,7 +227,7 @@ better_performance
 #we can also see almost all teams have a greater chance of winning in Home than in Away  or we can say they find it comfortable
 
 
-ggplot(overall_analysis, aes(x = reorder(Team,homeAdv), y = homeAdv)) + 
+ggplot(better_performance, aes(x = reorder(Team,homeAdv), y = homeAdv)) + 
   geom_bar(stat = "identity", fill = "#9d4edd") + 
   coord_flip()+
   labs(title = "Teams with greater home advantage",
@@ -237,7 +237,7 @@ ggplot(overall_analysis, aes(x = reorder(Team,homeAdv), y = homeAdv)) +
 
 
 
-
+#average goals home vs away comparison
 avg_goals <- c(mean(mydata$HTA.Goals, na.rm = TRUE), mean(mydata$FTA.Goals, na.rm = TRUE))
 goal_labels <- c("Home Goals", "Away Goals")
 
@@ -246,6 +246,9 @@ barplot(avg_goals, names.arg = goal_labels, col = c("blue", "red"),
         ylab = "Average Goals", ylim = c(0, max(avg_goals) + 0.5))
 
 
+
+#card analysis of each team
+#plotting is not correct
 card_analysis_plot <- function(mydata) {
   
   card_summary <- mydata %>%
@@ -285,6 +288,8 @@ card_analysis_plot <- function(mydata) {
 
 card_analysis_plot(mydata)
 
+
+#referee card analysis
 unique(mydata$Referee)
 referee_card_analysis <- function(mydata) {
   
@@ -303,6 +308,8 @@ referee_card_analysis <- function(mydata) {
 
 referee_card_analysis(mydata)
 
+
+#analysing the comeback chances of teams
 comeback_count <- function(mydata) {
   
   comeback_summary <- mydata %>%
@@ -315,12 +322,19 @@ comeback_count <- function(mydata) {
       ComebackWins = n()
     ) %>%
     arrange(desc(ComebackWins))
-  
-  cat("\nNumber of Comeback Wins by Each Team (Trailing at Half Time but Winning at Full Time):\n")
-  kable(comeback_summary, digits = 0, caption = "Comeback Wins by Teams")
+  return(comeback_summary)
 }
+comeback<-comeback_count(mydata)
+comeback
+ggplot(comeback, aes(x = reorder(WinningTeam,ComebackWins), y = ComebackWins)) + 
+  geom_bar(stat = "identity", fill = "#4A90E2") + 
+  coord_flip()+
+  labs(title = "Teams with highest comebacks",
+       x = "Teams",
+       y = "Comebacks") 
+#teams like manchester united,tottenham and arsenal have shown the most comebacks
 
-comeback_count(mydata)
+
 
 foul_win_analysis <- function(mydata) {
   
@@ -376,7 +390,7 @@ seasonal_performance <- mydata %>%
     Matches = n()
   ) %>%
   filter(Matches >= 30) 
-
+seasonal_performance
 
 #seasonal goal difference trends
 ggplot(seasonal_performance, aes(x = SeasonStart, y = AvgGoalDiff)) +
@@ -395,3 +409,4 @@ ggplot(seasonal_performance, aes(x = SeasonStart, y = AvgGoalDiff)) +
     legend.position = "none"
   )
 
+#win percentage trends across seasons
