@@ -296,17 +296,31 @@ referee_card_analysis <- function(mydata) {
   referee_summary <- mydata %>%
     group_by(Referee) %>%
     summarise(
-      AvgYellowPerMatch = mean(H.Yellow, na.rm = TRUE) + mean(A.Yellow, na.rm = TRUE),
-      AvgRedPerMatch = mean(H.Red, na.rm = TRUE) + mean(A.Red, na.rm = TRUE),
+      AvgYellowPerMatch = mean(H.Yellow+A.Yellow, na.rm = TRUE),
+      AvgRedPerMatch = mean(H.Red+A.Red, na.rm = TRUE),
       Matches = n()
+    )%>%  mutate(
+      StrictnessScore = AvgYellowPerMatch + 2 * AvgRedPerMatch
     ) %>%
-    arrange(desc(AvgYellowPerMatch), desc(AvgRedPerMatch))
+    arrange(desc(StrictnessScore))
   
-  cat("\nTotal Yellow and Red Cards Given by Each Referee:\n")
+  cat("\nAverage Yellow and Red Cards Given by Each Referee:\n")
   print(referee_summary, n = Inf)
 }
 
 referee_card_analysis(mydata)
+referee<-referee_card_analysis(mydata)
+#top 10 strict referees
+referee<-referee%>%slice_head(n=10)
+ggplot(referee, aes(x = reorder(Referee,StrictnessScore ), y = StrictnessScore)) +
+  geom_bar(stat = "identity", fill = "#ff6361") +
+  coord_flip() +
+  labs(
+    title = "Top 10 strict referees",
+    x = "Referee",
+    y = "Strictness score"
+  ) +
+  theme_minimal()
 
 
 #analysing the comeback chances of teams
