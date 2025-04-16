@@ -1,6 +1,6 @@
 
 
-install.packages(c("dplyr", "ggplot2", "ggrepel", "tidyr","forcats","knitr"))
+install.packages(c("dplyr", "ggplot2", "ggrepel", "tidyr","forcats","knitr","zoo"))
 
 library(dplyr)
 library(ggplot2)
@@ -8,7 +8,7 @@ library(ggrepel)
 library(tidyr)
 library(forcats)
 library(knitr)
-
+library(zoo)
 mydata<-read.csv("England_csv.csv")
 head(mydata,10)
 #getting a table view of the dataset
@@ -535,4 +535,53 @@ team_performance <- function(team_name, data = seasonal_performance) {
 
 team_performance("Arsenal")
 team_performance("Man City")
+
+
+# Assuming your `mydata` data frame is already loaded and cleaned
+
+analyze_team_performance_over_time <- function(data, team_name, window_size = 10) {
+  
+  team_data<-data%>%
+    filter(HomeTeam==team_name | AwayTeam==team_name)%>%
+    arrange(Date)%>%
+    mutate(
+      SeasonStart=as.numeric(substr(Season,1,4)),
+      IsHome=ifelse(HomeTeam==team_name,TRUE,FALSE),
+      GoalsScored=ifelse(IsHome==TRUE,FTH.Goals,FTA.Goals),
+      GoalsConceded=ifelse(IsHome==TRUE,FTA.Goals,FTH.Goals),
+      Result=case_when(
+        (IsHome & FT.Result=="H")|(!IsHome & FT.Result=="A")~"Win",
+        FT.Result=="D"~"Draw",
+        TRUE~"Loss"
+      )
+    )
+  team_data<-team_data%>%
+    mutate(
+      RollingGoalsScored=rollmean(GoalsScored,k=window_size,fill=NA,align="right"),
+      RollingGoalsConceded=rollmean(GoalsConceded,k=window_size,fill=NA,align="right"),
+      RollingWins=rollsum(ifelse(Result=="Win",1,0),k=window_size,fill=NA,align="right"),
+      RollingLosses=rollsum(ifelse(Result=="Loss",1,0),k=window_size,fill=NA,align="right")
+    )
+  
+  plot_data <- team_data %>%
+    select(Date, SeasonStart, RollingGoalsScored, RollingGoalsConceded, RollingWins, RollingLosses) %>%
+    pivot_longer(cols = starts_with("Rolling"), names_to = "Metric", values_to = "Value")
+
+  
+  ggplot(plot_data, aes(x = Date, y = Value, color = Metric)) +
+    geom_line(linewidth = 1) +
+    facet_wrap(~ Metric, scales = "free_y", ncol = 2) +
+    labs(
+      title = paste(team_name, "Rolling Performance Over Time (Window Size:", window_size, "Games)"),
+      x = "Date",
+      y = "Rolling Average",
+      color = "Metric"
+    ) +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+}
+
+
+analyze_team_performance_over_time(mydata, "Man United", window_size = 30)
+analyze_team_performance_over_time(mydata, "Arsenal", window_size = 30)
 
