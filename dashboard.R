@@ -329,11 +329,16 @@ server <- function(input, output) {
     mydata %>%
       group_by(Referee) %>%
       summarise(
-        AvgYellowPerMatch = mean(H.Yellow + A.Yellow, na.rm = TRUE),
-        AvgRedPerMatch = mean(H.Red + A.Red, na.rm = TRUE),
+        AvgHomeYellow = mean(H.Yellow, na.rm = TRUE),
+        AvgAwayYellow = mean(A.Yellow, na.rm = TRUE),
+        AvgHomeRed = mean(H.Red, na.rm = TRUE),
+        AvgAwayRed = mean(A.Red, na.rm = TRUE),
         Matches = n()
       ) %>%
+      filter(Matches > 100) %>%
       mutate(
+        AvgYellowPerMatch = AvgHomeYellow + AvgAwayYellow,
+        AvgRedPerMatch = AvgHomeRed + AvgAwayRed,
         StrictnessScore = AvgYellowPerMatch + 2 * AvgRedPerMatch
       ) %>%
       arrange(desc(StrictnessScore))
