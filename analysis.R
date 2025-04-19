@@ -1,7 +1,8 @@
 
 
-install.packages(c("dplyr", "ggplot2", "ggrepel", "tidyr","forcats","knitr","zoo"))
+install.packages(c("dplyr", "ggplot2", "ggrepel", "tidyr","forcats","knitr","zoo","corrplot","pactchwork"))
 
+library(patchwork)
 library(dplyr)
 library(ggplot2)
 library(ggrepel) 
@@ -9,6 +10,7 @@ library(tidyr)
 library(forcats)
 library(knitr)
 library(zoo)
+library(corrplot)
 mydata<-read.csv("England_csv.csv")
 head(mydata,10)
 #getting a table view of the dataset
@@ -35,7 +37,7 @@ str(mydata)
 #checking the na values in columns
 colSums(is.na(mydata))
 
-
+mydata2<-mydata
 #filling na values of integer with 0
 mydata$HTH.Goals[is.na(mydata$HTH.Goals)]<-0
 mydata$HTA.Goals[is.na(mydata$HTA.Goals)]<-0
@@ -357,18 +359,21 @@ referee_card_analysis <- function(mydata) {
   referee_summary <- mydata %>%
     group_by(Referee) %>%
     summarise(
-      AvgYellowPerMatch = mean(H.Yellow+A.Yellow, na.rm = TRUE),
-      AvgRedPerMatch = mean(H.Red+A.Red, na.rm = TRUE),
+      AvgYellowPerMatch = mean(H.Yellow + A.Yellow, na.rm = TRUE),
+      AvgRedPerMatch = mean(H.Red + A.Red, na.rm = TRUE),
       Matches = n()
-    )%>%  mutate(
+    ) %>%
+    filter(Matches > 100) %>%  # 🔍 Filter referees with more than 100 matches
+    mutate(
       StrictnessScore = AvgYellowPerMatch + 2 * AvgRedPerMatch
     ) %>%
     arrange(desc(StrictnessScore))
   
-  cat("\nAverage Yellow and Red Cards Given by Each Referee:\n")
+  cat("\nAverage Yellow and Red Cards Given by Each Referee (more than 100 matches):\n")
   print(referee_summary, n = Inf)
   return(referee_summary)
 }
+
 
 referee_card_analysis(mydata)
 referee<-referee_card_analysis(mydata)
@@ -587,20 +592,22 @@ analyze_team_performance_over_time(mydata, "Arsenal", window_size = 30)
 analyze_team_performance_over_time(mydata,"Chelsea",window_size = 30)
 
 #exploring the variation in each numerical variables
-ggplot(mydata, aes(x = FTH.Goals)) +
+
+#checking the distribution of full time home goals
+ggplot(mydata2, aes(x = FTH.Goals)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Full Time Home Goals",
        x = "Full Time Home Goals",
        y = "Frequency") +
   theme_minimal()
 
-ggplot(mydata, aes(y = FTH.Goals)) +
+ggplot(mydata2, aes(y = FTH.Goals)) +
   geom_boxplot(fill = "orange", color = "black") +
   labs(title = "Box Plot of Full Time Home Goals",
        y = "Full Time Home Goals") +
   theme_minimal()
 
-ggplot(mydata, aes(x = FTH.Goals)) +
+ggplot(mydata2, aes(x = FTH.Goals)) +
   geom_density(fill = "purple", alpha = 0.7) +
   labs(title = "Density Plot of Full Time Home Goals",
        x = "Full Time Home Goals",
@@ -610,20 +617,21 @@ ggplot(mydata, aes(x = FTH.Goals)) +
 #Higher goal counts are rare but do occur (long tail).
 #The data is discrete, positively skewed, and has outliers on the higher side.
 
-ggplot(mydata, aes(x = FTA.Goals)) +
+#checking the distribution of full time away goals
+ggplot(mydata2, aes(x = FTA.Goals)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Full Time Away Goals",
        x = "Full Time Away Goals",
        y = "Frequency") +
   theme_minimal()
 
-ggplot(mydata, aes(y = FTA.Goals)) +
+ggplot(mydata2, aes(y = FTA.Goals)) +
   geom_boxplot(fill = "orange", color = "black") +
   labs(title = "Box Plot of Full Time Away Goals",
        y = "Full Time Away Goals") +
   theme_minimal() 
 
-ggplot(mydata, aes(x = FTA.Goals)) +
+ggplot(mydata2, aes(x = FTA.Goals)) +
   geom_density(fill = "purple", alpha = 0.7) +
   labs(title = "Density Plot of Full Time Away Goals",
        x = "Full Time Away Goals",
@@ -633,21 +641,22 @@ ggplot(mydata, aes(x = FTA.Goals)) +
 #Higher goal counts are rare but do occur (long tail).
 #The data is discrete, positively skewed, and has outliers on the higher side.
 
-ggplot(mydata, aes(x = H.Shots)) +
+#checking the distribution of Home shots
+ggplot(mydata2, aes(x = H.Shots)) +
   geom_histogram(binwidth = 2, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Home Shots",
        x = "Home Shots",
        y = "Frequency") +
   theme_minimal()
 
-ggplot(mydata, aes(y = H.Shots)) +
+ggplot(mydata2, aes(y = H.Shots)) +
   geom_boxplot(fill = "orange", color = "black") +
   labs(title = "Box Plot of Home Shots",
        y = "Home Shots") +
   theme_minimal() +
   coord_flip()
 
-ggplot(mydata, aes(x = H.Shots)) +
+ggplot(mydata2, aes(x = H.Shots)) +
   geom_density(fill = "purple", alpha = 0.7) +
   labs(title = "Density Plot of Home Shots",
        x = "Home Shots",
@@ -656,24 +665,51 @@ ggplot(mydata, aes(x = H.Shots)) +
 #Most home teams shoot around 10–14 times per match.
 #Few teams take 20+ shots, and those are uncommon or extreme matches.
 #The data is not normally distributed – it is skewed to the right.
-#Outliers (such as 30–40 shots) might warrant further investigation — maybe those were one-sided dominant performances.
+#Outliers (such as 30–40 shots) might warrant further investigation — maybe those were one-sided dominant performances
+
+.
+ggplot(mydata2, aes(x = H.SOT)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Home Shots on Target",
+       x = "Home Shots on Target",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata2, aes(y = H.SOT)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Home Shots on Target",
+       y = "Home Shots on Target") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata2, aes(x = H.SOT)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Home Shots on Target",
+       x = "Home Shots on Target",
+       y = "Density") +
+  theme_minimal()
+#most home teams shots on target are 3-7
+#the data is positively skewed and not symmetrical
+#the outliers are between(15-25) shows domination in attack by home teams
 
 
-ggplot(mydata, aes(x = A.Shots)) +
+
+#checking the distribution of away shots
+ggplot(mydata2, aes(x = A.Shots)) +
   geom_histogram(binwidth = 2, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Away Shots",
        x = "Away Shots",
        y = "Frequency") +
   theme_minimal()
 
-ggplot(mydata, aes(y = A.Shots)) +
+ggplot(mydata2, aes(y = A.Shots)) +
   geom_boxplot(fill = "orange", color = "black") +
   labs(title = "Box Plot of Away Shots",
        y = "Away Shots") +
   theme_minimal() +
   coord_flip()
 
-ggplot(mydata, aes(x = A.Shots)) +
+ggplot(mydata2, aes(x = A.Shots)) +
   geom_density(fill = "purple", alpha = 0.7) +
   labs(title = "Density Plot of Away Shots",
        x = "Away Shots",
@@ -684,230 +720,276 @@ ggplot(mydata, aes(x = A.Shots)) +
 #The data is not normally distributed – it is skewed to the right.
 #Outliers (such as 25-30 shots) might warrant further investigation — maybe those were one-sided dominant performances.
 
-
-ggplot(mydata, aes(x = H.SOT)) +
-  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
-  labs(title = "Histogram of Home Shots on Target",
-       x = "Home Shots on Target",
-       y = "Frequency") +
-  theme_minimal()
-
-ggplot(mydata, aes(y = H.SOT)) +
-  geom_boxplot(fill = "orange", color = "black") +
-  labs(title = "Box Plot of Home Shots on Target",
-       y = "Home Shots on Target") +
-  theme_minimal() +
-  coord_flip()
-
-ggplot(mydata, aes(x = H.SOT)) +
-  geom_density(fill = "purple", alpha = 0.7) +
-  labs(title = "Density Plot of Home Shots on Target",
-       x = "Home Shots on Target",
-       y = "Density") +
-  theme_minimal()
-
-
-ggplot(mydata, aes(x = A.SOT)) +
+#checking the distribution of away shots on target
+ggplot(mydata2, aes(x = A.SOT)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Away Shots on Target",
        x = "Away Shots on Target",
        y = "Frequency") +
   theme_minimal()
 
-ggplot(mydata, aes(y = A.SOT)) +
+ggplot(mydata2, aes(y = A.SOT)) +
   geom_boxplot(fill = "orange", color = "black") +
   labs(title = "Box Plot of Away Shots on Target",
        y = "Away Shots on Target") +
   theme_minimal() +
   coord_flip()
 
-ggplot(mydata, aes(x = A.SOT)) +
+ggplot(mydata2, aes(x = A.SOT)) +
   geom_density(fill = "purple", alpha = 0.7) +
   labs(title = "Density Plot of Away Shots on Target",
        x = "Away Shots on Target",
        y = "Density") +
   theme_minimal()
+#most away teams have 2-5 shots on target
+#the data is positively skewed and not symmetrical
+#the outliers are present between (10-20) shows matches with domination of away teams
 
 
-ggplot(mydata, aes(x = H.Fouls)) +
+
+#checking the distribution of home fouls
+ggplot(mydata2, aes(x = H.Fouls)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Home Fouls",
        x = "Home Fouls",
        y = "Frequency") +
   theme_minimal()
 
-ggplot(mydata, aes(y = H.Fouls)) +
+ggplot(mydata2, aes(y = H.Fouls)) +
   geom_boxplot(fill = "orange", color = "black") +
   labs(title = "Box Plot of Home Fouls",
        y = "Home Fouls") +
   theme_minimal() +
   coord_flip()
 
-ggplot(mydata, aes(x = H.Fouls)) +
+ggplot(mydata2, aes(x = H.Fouls)) +
   geom_density(fill = "purple", alpha = 0.7) +
   labs(title = "Density Plot of Home Fouls",
        x = "Home Fouls",
        y = "Density") +
   theme_minimal()
+#most home teams commit 9-13 fouls in general
+#the distribution is slightly positively skewed and mostly normal
+#there are outliers on both sides 
+#the outliers on left indicates clean play by home teams
+#the outliers on right indicates dirty play by home teams we have to see when this happens
+#this may be due to more goals conceded so under pressure they play dirty to prevent further goals
 
-
-
-ggplot(mydata, aes(x = A.Fouls)) +
-  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
-  labs(title = "Histogram of Away Fouls",
-       x = "Away Fouls",
-       y = "Frequency") +
-  theme_minimal()
-
-ggplot(mydata, aes(y = A.Fouls)) +
-  geom_boxplot(fill = "orange", color = "black") +
-  labs(title = "Box Plot of Away Fouls",
-       y = "Away Fouls") +
-  theme_minimal() +
-  coord_flip()
-
-ggplot(mydata, aes(x = A.Fouls)) +
-  geom_density(fill = "purple", alpha = 0.7) +
-  labs(title = "Density Plot of Away Fouls",
-       x = "Away Fouls",
-       y = "Density") +
-  theme_minimal()
-
-
-ggplot(mydata, aes(x = H.Corners)) +
-  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
-  labs(title = "Histogram of Home Corners",
-       x = "Home Corners",
-       y = "Frequency") +
-  theme_minimal()
-
-ggplot(mydata, aes(y = H.Corners)) +
-  geom_boxplot(fill = "orange", color = "black") +
-  labs(title = "Box Plot of Home Corners",
-       y = "Home Corners") +
-  theme_minimal() +
-  coord_flip()
-
-ggplot(mydata, aes(x = H.Corners)) +
-  geom_density(fill = "purple", alpha = 0.7) +
-  labs(title = "Density Plot of Home Corners",
-       x = "Home Corners",
-       y = "Density") +
-  theme_minimal()
-
-
-
-ggplot(mydata, aes(x = A.Corners)) +
-  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
-  labs(title = "Histogram of Away Corners",
-       x = "Away Corners",
-       y = "Frequency") +
-  theme_minimal()
-
-ggplot(mydata, aes(y = A.Corners)) +
-  geom_boxplot(fill = "orange", color = "black") +
-  labs(title = "Box Plot of Away Corners",
-       y = "Away Corners") +
-  theme_minimal() +
-  coord_flip()
-
-ggplot(mydata, aes(x = A.Corners)) +
-  geom_density(fill = "purple", alpha = 0.7) +
-  labs(title = "Density Plot of Away Corners",
-       x = "Away Corners",
-       y = "Density") +
-  theme_minimal()
-
-
-ggplot(mydata, aes(x = H.Yellow)) +
+#checking the distribution of home yellow cards
+ggplot(mydata2, aes(x = H.Yellow)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Home Yellow Cards",
        x = "Home Yellow Cards",
        y = "Frequency") +
   theme_minimal()
 
-ggplot(mydata, aes(y = H.Yellow)) +
+ggplot(mydata2, aes(y = H.Yellow)) +
   geom_boxplot(fill = "orange", color = "black") +
   labs(title = "Box Plot of Home Yellow Cards",
        y = "Home Yellow Cards") +
   theme_minimal() +
   coord_flip()
 
-ggplot(mydata, aes(x = H.Yellow)) +
+ggplot(mydata2, aes(x = H.Yellow)) +
   geom_density(fill = "purple", alpha = 0.7) +
   labs(title = "Density Plot of Home Yellow Cards",
        x = "Home Yellow Cards",
        y = "Density") +
   theme_minimal()
+#most home teams get around 0-2 yellow cards
+#the distribution is positively skewed
+#there are outliers above 4 indicates foul play by home teams
 
-ggplot(mydata, aes(x = H.Red)) +
+#checking the distribution of home red cards
+ggplot(mydata2, aes(x = H.Red)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Home Red Cards",
        x = "Home Red Cards",
        y = "Frequency") +
   theme_minimal()
 
-ggplot(mydata, aes(y = H.Red)) +
+ggplot(mydata2, aes(y = H.Red)) +
   geom_boxplot(fill = "orange", color = "black") +
   labs(title = "Box Plot of Home Red Cards",
        y = "Home Red Cards") +
   theme_minimal() +
   coord_flip()
 
-ggplot(mydata, aes(x = H.Red)) +
+ggplot(mydata2, aes(x = H.Red)) +
   geom_density(fill = "purple", alpha = 0.7) +
   labs(title = "Density Plot of Home Red Cards",
        x = "Home Red Cards",
        y = "Density") +
   theme_minimal()
+#most home teams get no red cards but there are instances when the get red cards and sometimes even 2
+#the distrbution is not symmetrical
+#the outliers indicates extreme foul play by home teams
 
 
+#checking the distribution of away fouls
+ggplot(mydata2, aes(x = A.Fouls)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Away Fouls",
+       x = "Away Fouls",
+       y = "Frequency") +
+  theme_minimal()
 
-ggplot(mydata, aes(x = A.Yellow)) +
+ggplot(mydata2, aes(y = A.Fouls)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Away Fouls",
+       y = "Away Fouls") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata2, aes(x = A.Fouls)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Away Fouls",
+       x = "Away Fouls",
+       y = "Density") +
+  theme_minimal()
+#most away teams in general score between 9-13 fouls only
+#the distribution is mostly normal but slightly positively skewed
+#there are outliers on both sides
+#the outliers between 20-30 indicates dirty play by away teams
+
+#we can see both side teams on average commit same no. of fouls
+#but there are most instances of clean play by home teams than away teams this may be due to less pressure as they are playing in home ground
+
+ggplot(mydata2, aes(x = A.Yellow)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Away Yellow Cards",
        x = "Away Yellow Cards",
        y = "Frequency") +
   theme_minimal()
 
-ggplot(mydata, aes(y = A.Yellow)) +
+ggplot(mydata2, aes(y = A.Yellow)) +
   geom_boxplot(fill = "orange", color = "black") +
   labs(title = "Box Plot of Away Yellow Cards",
        y = "Away Yellow Cards") +
   theme_minimal() +
   coord_flip()
 
-ggplot(mydata, aes(x = A.Yellow)) +
+ggplot(mydata2, aes(x = A.Yellow)) +
   geom_density(fill = "purple", alpha = 0.7) +
   labs(title = "Density Plot of Away Yellow Cards",
        x = "Away Yellow Cards",
        y = "Density") +
   theme_minimal()
+#most away teams gets around 1-2 yellow cards 
+#there are outliers above 6 indicates foul play by away teams 
+#the distribution is positively skewed
 
-
-ggplot(mydata, aes(x = A.Red)) +
+#checking the distribution of away red cards
+ggplot(mydata2, aes(x = A.Red)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Away Red Cards",
        x = "Away Red Cards",
        y = "Frequency") +
   theme_minimal()
 
-ggplot(mydata, aes(y = A.Red)) +
+ggplot(mydata2, aes(y = A.Red)) +
   geom_boxplot(fill = "orange", color = "black") +
   labs(title = "Box Plot of Away Red Cards",
        y = "Away Red Cards") +
   theme_minimal() +
   coord_flip()
 
-ggplot(mydata, aes(x = A.Red)) +
+ggplot(mydata2, aes(x = A.Red)) +
   geom_density(fill = "purple", alpha = 0.7) +
   labs(title = "Density Plot of Away Red Cards",
        x = "Away Red Cards",
        y = "Density") +
   theme_minimal()
+#aways teams mostly get no cards but in some instances get 1 red cards and at max 2
+#there are less outliers above 1
+#the distribution is positively skewd and not symmetrical
+
+#the fouls scored by away teams is more than home teams in general but the no. of red cards of away teams is less than that of home teams and extreme foul play is by home teams this may be due to respect pressure in case of loosing in home grounds
+
+#checking the distribution of home corners 
+ggplot(mydata2, aes(x = H.Corners)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Home Corners",
+       x = "Home Corners",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata2, aes(y = H.Corners)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Home Corners",
+       y = "Home Corners") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata2, aes(x = H.Corners)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Home Corners",
+       x = "Home Corners",
+       y = "Density") +
+  theme_minimal()
+#the home team most of the times get 4-7 corners
+#the distribution is positively skewed
+#there are few instances of home teams getting corners above 15 this may be due to dominance by home teams
+
+#checking the distribution of away corners
+ggplot(mydata2, aes(x = A.Corners)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Away Corners",
+       x = "Away Corners",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata2, aes(y = A.Corners)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Away Corners",
+       y = "Away Corners") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata2, aes(x = A.Corners)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Away Corners",
+       x = "Away Corners",
+       y = "Density") +
+  theme_minimal()
+#most of the times away teams gets 3-5 corners
+#the distribution is positively skewed 
+#there are many outliers above 10 this indicates instances of dominance of away teams against home teams
+#as we can see away teams get less corners in comparison to home teams this may be due to less attack of away teams or good defense by home teams
+
+#function to see the distribution of  a variable of choice
+
+plot_var_dist <- function(data, var_name) {
+  df <- data.frame(x = data[[var_name]])
+  
+  p1 <- ggplot(df, aes(x = x)) +
+    geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+    labs(title = paste("Histogram of", var_name),
+         x = var_name, y = "Frequency") +
+    theme_minimal()
+  
+  p2 <- ggplot(df, aes(y = x)) +
+    geom_boxplot(fill = "orange", color = "black") +
+    labs(title = paste("Box Plot of", var_name),
+         y = var_name) +
+    theme_minimal() +
+    coord_flip()
+  
+  p3 <- ggplot(df, aes(x = x)) +
+    geom_density(fill = "purple", alpha = 0.7) +
+    labs(title = paste("Density Plot of", var_name),
+         x = var_name, y = "Density") +
+    theme_minimal()
+  
+  # Arrange vertically
+  p1 / p2 / p3
+}
+plot_var_dist(mydata2, "A.Corners")
 
 
-#exploring the categorical variables
+
+#exploring the distribution of categorical variables
+#exploring the duration of seasons
 season_counts <- mydata %>%
   count(Season, name = "MatchCount") %>%
   arrange(desc(MatchCount))
@@ -920,78 +1002,361 @@ ggplot(season_counts, aes(x = Season, y = MatchCount)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
 
-
-season_proportions <- mydata %>%
-  count(Season, name = "MatchCount") %>%
-  mutate(Proportion = MatchCount / n()) %>%
-  arrange(desc(Proportion))
-
-ggplot(season_proportions, aes(x = Season, y = Proportion)) +
-  geom_bar(stat = "identity", fill = "lightcoral", color = "black") +
-  labs(title = "Proportion of Matches per Season",
-       x = "Season",
-       y = "Proportion of Matches") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) +
-  scale_y_continuous(labels = scales::percent) # Format y-axis as percentages
-
-
-ft_result_counts <- mydata %>%
-  count(FT.Result, name = "ResultCount")
-
-ggplot(ft_result_counts, aes(x = FT.Result, y = ResultCount)) +
-  geom_bar(stat = "identity", fill = "lightgreen", color = "black") +
-  labs(title = "Number of Matches per Full Time Result",
-       x = "Full Time Result (H=Home Win, A=Away Win, D=Draw)",
-       y = "Number of Matches") +
-  theme_minimal()
-
-
-ft_result_proportions <- mydata %>%
-  count(FT.Result, name = "ResultCount") %>%
-  mutate(Proportion = ResultCount / n())
-
-ggplot(ft_result_proportions, aes(x = FT.Result, y = Proportion)) +
-  geom_bar(stat = "identity", fill = "gold", color = "black") +
-  labs(title = "Proportion of Matches per Full Time Result",
-       x = "Full Time Result (H=Home Win, A=Away Win, D=Draw)",
-       y = "Proportion of Matches") +
-  theme_minimal() +
-  scale_y_continuous(labels = scales::percent)
+#1993/1994 and 1994/1995 seasons were the longest seasons and 2024/2025 is the shortest season, rest in all the seasons the no. of matches played were same
 
 
 
+#exploring the distribution of different types of match outcomes
+plot_ft_result_counts <- function(data) {
+  ft_result_counts <- data %>%
+    count(FT.Result, name = "ResultCount")
+  
+  ggplot(ft_result_counts, aes(x = FT.Result, y = ResultCount)) +
+    geom_bar(stat = "identity", fill = "lightgreen", color = "black") +
+    labs(
+      title = "Number of Matches per Full Time Result",
+      x = "Full Time Result (H=Home Win, A=Away Win, D=Draw)",
+      y = "Number of Matches"
+    ) +
+    theme_minimal()
+}
+plot_ft_result_counts(mydata)
 
-referee_counts <- mydata %>%
-  count(Referee, name = "MatchCount") %>%
-  arrange(desc(MatchCount))
+#more number of matches resulted in home team winning
 
+
+#checking the top 20 referees by number of matches
 # Displaying the top 20 referees to avoid an overly long plot
-top_n <- 20
-top_referees <- referee_counts %>% slice_head(n = top_n)
 
-ggplot(top_referees, aes(x = reorder(Referee, MatchCount), y = MatchCount)) +
-  geom_bar(stat = "identity", fill = "lightsalmon", color = "black") +
-  coord_flip() + # Flip for better readability of referee names
-  labs(title = paste("Top", top_n, "Referees by Number of Matches"),
-       y = "Number of Matches",
-       x = "Referee") +
+plot_top_referees <- function(data, referee_col = "Referee", top_n = 20) {
+  referee_counts <- data %>%
+    count(.data[[referee_col]], name = "MatchCount") %>%
+    arrange(desc(MatchCount)) %>%
+    slice_head(n = top_n)
+  
+  ggplot(referee_counts, aes(x = reorder(.data[[referee_col]], MatchCount), y = MatchCount)) +
+    geom_bar(stat = "identity", fill = "lightsalmon", color = "black") +
+    coord_flip() +
+    labs(title = paste("Top", top_n, "Referees by Number of Matches"),
+         y = "Number of Matches",
+         x = "Referee") +
+    theme_minimal()
+}
+plot_top_referees(mydata, "Referee", 20)
+
+
+
+#Bivariate Analysis (Exploring Relationships Between Two Variables)
+
+# Numerical vs. Numerical:
+colnames(mydata)
+#relationship between full time home goals and full time away goals
+ggplot(mydata,aes(x=FTH.Goals,y=FTA.Goals))+
+  geom_point()+
+  labs(
+    title="FTH Goals vs FTA Goals",
+    x="FTH Goals",
+    y="FTA Goals"
+  )+
   theme_minimal()
+cor(mydata$FTH.Goals,mydata$FTA.Goals)
+#they are showing a negative linear relationship means if away team scores more home team scores less
 
-referee_proportions <- mydata %>%
-  count(Referee, name = "MatchCount") %>%
-  mutate(Proportion = MatchCount / n()) %>%
-  arrange(desc(Proportion))
+#relationship between FTH Goals and HTH Goals
+#checking whether more half time home goals result in more full time home goals 
+ggplot(mydata,aes(x=HTH.Goals,y=FTH.Goals))+
+  geom_point()+
+  labs(
+    title="HTH Goals vs FTH Goals",
+    x="HTH Goals",
+    y="FTH Goals"
+  )+
+  theme_minimal()
+cor(mydata$HTH.Goals,mydata$FTH.Goals)
+#they are showing a strong positive linear relationship,means if by half time home team scores more goals then it will result in higher full time goals
 
-# Displaying the top 20 referees by proportion
-top_n <- 20
-top_referee_proportions <- referee_proportions %>% slice_head(n = top_n)
+#relationship between FTA Goals and HTA Goals
+ggplot(mydata,aes(x=HTA.Goals,y=FTA.Goals))+
+  geom_point()+
+  labs(
+    title="HTA Goals vs FTA Goals",
+    x="HTA Goals",
+    y="FTA Goals"
+  )+
+  theme_minimal()
+cor(mydata$HTA.Goals,mydata$FTA.Goals)
+#they are showing a strong positive linear relationship i.e more half time away goals result in more full time away goals
 
-ggplot(top_referee_proportions, aes(x = reorder(Referee, Proportion), y = Proportion)) +
-  geom_bar(stat = "identity", fill = "plum", color = "black") +
-  coord_flip() +
-  labs(title = paste("Top", top_n, "Referees by Proportion of Matches"),
-       y = "Proportion of Matches",
-       x = "Referee") +
+
+# Scatter Plot: Home Shots vs. Full Time Home Goals
+ggplot(mydata, aes(x = H.Shots, y = FTH.Goals)) +
+  geom_point() +
+  labs(title = "Home Shots vs. Full Time Home Goals",
+       x = "Home Shots",
+       y = "Full Time Home Goals") +
+  theme_minimal()
+cor(mydata$H.Shots,mydata$FTH.Goals)
+#they have a positive linear correlation means more shots result in more goals
+
+
+# Scatter Plot: Home Shots on Target vs. Full Time Home Goals
+ggplot(mydata, aes(x = H.SOT, y = FTH.Goals)) +
+  geom_point() +
+  labs(title = "Home Shots on Target vs. Full Time Home Goals",
+       x = "Home Shots on Target",
+       y = "Full Time Home Goals") +
+  theme_minimal()
+cor(mydata$H.SOT,mydata$FTH.Goals)
+#they have a positive linear correlation we know from the previous relationship between H shots and FTH goals that more shots result in more goals but more shots are there on target can be better to tell that whether goal could be scored or not
+
+#relationship between away shots and Full time away goals
+ggplot(mydata, aes(x = A.Shots, y = FTA.Goals)) +
+  geom_point() +
+  labs(title = "Away Shots vs. Full Time Away Goals",
+       x = "Away Shots",
+       y = "Full Time Away Goals") +
+  theme_minimal()
+cor(mydata$A.Shots,mydata$FTA.Goals)
+#they have a strong positive relationship it means more attempts to score result in more goals
+
+
+#relationship between away shots on target and full time away goals
+ggplot(mydata, aes(x = A.SOT, y = FTA.Goals)) +
+  geom_point() +
+  labs(title = "Away Shots on Target vs. Full Time Away Goals",
+       x = "Away Shots on Target",
+       y = "Full Time Away Goals") +
+  theme_minimal()
+cor(mydata$A.SOT,mydata$FTA.Goals)
+#they are showing a more positive relationship it means greater the accuracy of shots more will be the chances of goals
+
+#relationship between away fouls and home shots
+#checking whether more fouls by away team result in less attack by home teams
+ggplot(mydata, aes(x = A.Fouls, y = H.Shots)) +
+  geom_point() +
+  labs(title = "Away Fouls vs. Home shots",
+       x = "Away Fouls",
+       y = "Home shots") +
+  theme_minimal()
+cor(mydata$A.Fouls,mydata$H.Shots)
+
+ggplot(mydata, aes(x = A.Fouls, y = H.SOT)) +
+  geom_point() +
+  labs(title = "Away Fouls vs. Home shots on target",
+       x = "Away Fouls",
+       y = "Home shots") +
+  theme_minimal()
+cor(mydata$A.Fouls,mydata$H.SOT)
+#the answer is no, if away teams commit more fouls it does not inhibit the home teams from attacking
+
+#relationship between away fouls and home shots
+#checking whether more fouls by home team result in less attack by away teams
+ggplot(mydata, aes(x = H.Fouls, y = A.Shots)) +
+  geom_point() +
+  labs(title = "Home Fouls vs. Away shots",
+       x = "Home Fouls",
+       y = "Away shots") +
+  theme_minimal()
+cor(mydata$H.Fouls,mydata$A.Shots)
+
+ggplot(mydata, aes(x = H.Fouls, y = A.SOT)) +
+  geom_point() +
+  labs(title = "Home Fouls vs. Away shots",
+       x = "Home Fouls",
+       y = "Away shots") +
+  theme_minimal()
+cor(mydata$H.Fouls,mydata$A.SOT)
+#the answer is no, if home teams commit more fouls it does not inhibit the away teams from attacking
+colnames(mydata)
+
+ggplot(mydata, aes(x = H.Corners, y = FTH.Goals)) +
+  geom_point() +
+  labs(title = "Home Corners vs. Full time home goals",
+       x = "Home Corners",
+       y = "Full Time home goals") +
+  theme_minimal()
+cor(mydata$H.Corners,mydata$FTH.Goals)
+#they are having a positive linear relationship
+ggplot(mydata, aes(x = A.Corners, y = FTA.Goals)) +
+  geom_point() +
+  labs(title = "Away corners vs. FTA.Goals",
+       x = "Away Corners",
+       y = "Full time away goals") +
+  theme_minimal()
+cor(mydata$A.Corners,mydata$FTA.Goals)
+#they have a positive linear relationship
+
+#function to compare two numerical variables
+analyze_relationship <- function(data, var_x, var_y) {
+  x <- data[[var_x]]
+  y <- data[[var_y]]
+  correlation <- cor(x, y, use = "complete.obs")
+  cat("Correlation between", var_x, "and", var_y, "is:", round(correlation, 3), "\n")
+  ggplot(data, aes_string(x = var_x, y = var_y)) +
+    geom_point(color = "steelblue", alpha = 0.7) +
+    labs(
+      title = paste(var_x, "vs", var_y),
+      x = var_x,
+      y = var_y
+    ) +
+    theme_minimal()
+}
+analyze_relationship(mydata, "FTH.Goals", "FTA.Goals")
+analyze_relationship(mydata, "H.SOT", "FTH.Goals")
+analyze_relationship(mydata, "A.Fouls", "H.SOT")
+
+# Correlation Matrix
+numerical_data <- mydata[sapply(mydata, is.numeric)]
+correlation_matrix <- cor(numerical_data)
+print("Correlation Matrix of Numerical Variables:")
+print(correlation_matrix)
+corrplot(correlation_matrix, method = "number",type="upper")
+
+# Numerical vs. Categorical:
+ggplot(mydata, aes(x = FT.Result, y = FTH.Goals, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "FTH Goals by FT.Result", x = "FT.Result", y = "FTH Goals") +
+  theme_minimal()
+#when home team wins the median of FTH is higher in comparison to draws and losses and even less for losses than draws
+#There is a clear positive relationship between home goals and home wins: When the home team scores more, they are more likely to win.
+#Low-scoring matches from the home team are often associated with draws or losses.
+#FTH.Goals is a strong predictor of the full-time result, especially for identifying home wins.
+
+ggplot(mydata, aes(x = FT.Result, y = FTA.Goals, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "FTA Goals by FT.Result", x = "FT.Result", y = "FTA Goals") +
+  theme_minimal()
+#when away team wins the median of FTA is higher in comparison to draws and losses and even less for losses than draws
+#There is a clear positive relationship between away goals and away wins: When the away team scores more, they are more likely to win.
+#Low-scoring matches from the away team are often associated with draws or losses.
+#FTA.Goals is a strong predictor of the full-time result, especially for identifying home wins.
+
+ggplot(mydata, aes(x = FT.Result, y = H.Shots, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Home Shots by FT.Result", x = "FT.Result", y = "Home Shots") +
+  theme_minimal()
+#when home team wins the median of home shots is higher then it is comparatively less for draws and even less for away
+#H.Shots is a good predictor of home wins
+
+ggplot(mydata, aes(x = FT.Result, y = A.Shots, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Away Shots by FT.Result", x = "FT.Result", y = "Away Shots") +
+  theme_minimal()
+#when away team wins the median of away shots is higher then it is comparatively less for draws and even less for home
+#A.Shots is a good predictor of away wins
+
+ggplot(mydata, aes(x = FT.Result, y = H.SOT, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Home Shots on Target by FT.Result", x = "FT.Result", y = "Home SOT") +
+  theme_minimal()
+#when home team wins they have more shots on target than when the result is draw or away win
+#H.SOT is a strong predictor of home wins
+
+ggplot(mydata, aes(x = FT.Result, y = A.SOT, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Away Shots on Target by FT.Result", x = "FT.Result", y = "Away SOT") +
+  theme_minimal()
+#when away team wins they have more shots on target than when the result is draw or home win
+#A.SOT is a strong predictor of away wins
+
+ggplot(mydata, aes(x = FT.Result, y = H.Fouls, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Home Fouls by FT.Result", x = "FT.Result", y = "Home Fouls") +
+  theme_minimal()
+#H.Fouls is almost similar in all three match outcomes hence we cannot use fouls to predict match outcome
+
+ggplot(mydata, aes(x = FT.Result, y = A.Fouls, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Away Fouls by FT.Result", x = "FT.Result", y = "Away Fouls") +
+  theme_minimal()
+#A.Fouls is almost similar in all three cases of match outcomes
+
+ggplot(mydata, aes(x = FT.Result, y = H.Corners, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Home Corners by FT.Result", x = "FT.Result", y = "Home Corners") +
+  theme_minimal()
+#when the home team wins they apparently take more no. of corners
+
+ggplot(mydata, aes(x = FT.Result, y = A.Corners, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Away Corners by FT.Result", x = "FT.Result", y = "Away Corners") +
+  theme_minimal()
+#similarly when away team wins they take more number of corners 
+#hence corners can be used to predict match outcome
+
+ggplot(mydata, aes(x = FT.Result, y = H.Yellow, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Home Yellow Cards by FT.Result", x = "FT.Result", y = "Home Yellow") +
+  theme_minimal()
+#same in all three cases
+ggplot(mydata, aes(x = FT.Result, y = A.Yellow, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Away Yellow Cards by FT.Result", x = "FT.Result", y = "Away Yellow") +
+  theme_minimal()
+#same in all three cases
+ggplot(mydata, aes(x = FT.Result, y = H.Red, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Home Red Cards by FT.Result", x = "FT.Result", y = "Home Red") +
+  theme_minimal()
+#same in all three cases
+ggplot(mydata, aes(x = FT.Result, y = A.Red, fill = FT.Result)) +
+  geom_boxplot() +
+  labs(title = "Away Red Cards by FT.Result", x = "FT.Result", y = "Away Red") +
+  theme_minimal()
+#same in all three cases
+#function to compare numerical and categorical variable
+plot_box_by_category <- function(data, num_var, cat_var) {
+  ggplot(data, aes_string(x = cat_var, y = num_var, fill = cat_var)) +
+    geom_boxplot() +
+    labs(
+      title = paste(num_var, "by", cat_var),
+      x = cat_var,
+      y = num_var,
+      fill = cat_var
+    ) +
+    theme_minimal()
+}
+plot_box_by_category(mydata, "FTH.Goals", "FT.Result")
+
+
+# Categorical vs. Categorical:.
+top_seasons <- names(sort(table(mydata$Season), decreasing = TRUE)[1:5])
+top_data <- mydata %>% filter(Season %in% top_seasons)
+# Grouped Bar Chart: Full Time Result by Season (limited to top seasons)
+result_by_season <- mydata %>%
+  filter(Season %in% top_seasons) %>%
+  group_by(Season, FT.Result) %>%
+  summarise(Count = n(), .groups = 'drop')
+
+ggplot(result_by_season, aes(x = Season, y = Count, fill = FT.Result)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Full Time Result by Top Seasons",
+       x = "Season",
+       y = "Number of Matches",
+       fill = "Full Time Result") +
   theme_minimal() +
-  scale_y_continuous(labels = scales::percent)
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+#in most of the top seasons in terms of number of matches the match result was home win
+
+
+
+referee<-referee%>%slice_head(n=10)
+top_10_referees <- referee$Referee
+ftr_distribution <- mydata %>%
+  filter(Referee %in% top_10_referees) %>%
+  group_by(Referee, FT.Result) %>%
+  summarise(MatchCount = n(), .groups = "drop") %>%
+  complete(Referee, FT.Result = c("H", "D", "A"), fill = list(MatchCount = 0)) %>%
+  mutate(FT.Result = factor(FT.Result, levels = c("H", "D", "A")))  
+
+ggplot(ftr_distribution, aes(x = Referee, y = MatchCount, fill = FT.Result)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.7)) +
+  scale_fill_manual(values = c("H" = "#66a3ff", "D" = "#33cc33", "A" = "#ff6666")) +
+  labs(
+    title = "Full Time Result by Referee (Top 10 Strict Referees)",
+    x = "Referee",
+    y = "Number of Matches",
+    fill = "Full Time Result"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
