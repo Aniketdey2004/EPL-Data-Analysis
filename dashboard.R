@@ -1,10 +1,12 @@
+# Load analysis functions from analysis.R
+source("analysis.R")
+
+
 # app.R
 library(shiny)
 library(ggplot2)
 library(dplyr)
 
-# Load analysis functions from analysis.R
-source("analysis.R")
 
 # Define UI
 ui <- fluidPage(

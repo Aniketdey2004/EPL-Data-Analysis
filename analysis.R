@@ -669,7 +669,6 @@ ggplot(mydata2, aes(x = H.Shots)) +
 #The data is not normally distributed – it is skewed to the right.
 #Outliers (such as 30–40 shots) might warrant further investigation — maybe those were one-sided dominant performances
 
-.
 ggplot(mydata2, aes(x = H.SOT)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Histogram of Home Shots on Target",
