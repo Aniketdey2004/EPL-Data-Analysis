@@ -151,14 +151,35 @@ ui <- fluidPage(
                   ),
                   
                   tabPanel("Team Performance Over Time",
+                           selectInput("team_selected_perf", "Select a Team:",
+                                       choices = c("Man United", "Tottenham", "Arsenal", "Chelsea", "Everton", "Liverpool", 
+                                                   "Newcastle", "Aston Villa", "West Ham", "Man City", "Southampton", "Leicester",
+                                                   "Fulham", "Blackburn", "Sunderland", "Crystal Palace", "Leeds", "Middlesbrough",
+                                                   "Bolton", "West Brom", "Wolves", "Stoke", "Norwich", "Burnley", "Coventry",
+                                                   "Charlton", "Watford", "Wigan", "Bournemouth", "Brighton", "Sheffield Weds",
+                                                   "Wimbledon", "Birmingham", "Derby", "Portsmouth", "Swansea", "Nott'm Forest",
+                                                   "QPR", "Sheffield United", "Hull", "Ipswich", "Brentford", "Reading", "Bradford",
+                                                   "Cardiff", "Huddersfield", "Oldham", "Swindon", "Barnsley", "Blackpool", "Luton",
+                                                   "Brighton & Hove Albion", "Ipswich Town")),
                            plotOutput("team_performance_plot", width = "95%", height = "600px"),
                            verbatimTextOutput("team_performance_table")
                   ),
                   
                   tabPanel("Rolling Performance Analysis",
+                           selectInput("team_selected_rolling", "Select a Team:",
+                                       choices = c("Man United", "Tottenham", "Arsenal", "Chelsea", "Everton", "Liverpool", 
+                                                   "Newcastle", "Aston Villa", "West Ham", "Man City", "Southampton", "Leicester",
+                                                   "Fulham", "Blackburn", "Sunderland", "Crystal Palace", "Leeds", "Middlesbrough",
+                                                   "Bolton", "West Brom", "Wolves", "Stoke", "Norwich", "Burnley", "Coventry",
+                                                   "Charlton", "Watford", "Wigan", "Bournemouth", "Brighton", "Sheffield Weds",
+                                                   "Wimbledon", "Birmingham", "Derby", "Portsmouth", "Swansea", "Nott'm Forest",
+                                                   "QPR", "Sheffield United", "Hull", "Ipswich", "Brentford", "Reading", "Bradford",
+                                                   "Cardiff", "Huddersfield", "Oldham", "Swindon", "Barnsley", "Blackpool", "Luton",
+                                                   "Brighton & Hove Albion", "Ipswich Town")),
                            plotOutput("rolling_performance_plot", width = "95%", height = "600px"),
                            tableOutput("rolling_performance_table")
                   )
+                  
       )
     )
   )
@@ -434,20 +455,26 @@ server <- function(input, output) {
   
   # Team Performance Over Time - Performance of teams over multiple seasons
   output$team_performance_plot <- renderPlot({
-    team_performance("Arsenal")
+    req(input$team_selected_perf)
+    team_performance(input$team_selected_perf)
   })
   
   output$team_performance_table <- renderText({
-    team_performance("Man City")
+    paste("Displaying data for:", input$team_selected_perf)
   })
   
-  # Rolling Performance Over Time - Rolling metrics analysis
   output$rolling_performance_plot <- renderPlot({
-    analyze_team_performance_over_time(mydata, "Man United", window_size = 30)
+    req(input$team_selected_rolling)
+    analyze_team_performance_over_time(mydata, input$team_selected_rolling, window_size = 30)
   })
   
   output$rolling_performance_table <- renderTable({
-    analyze_team_performance_over_time(mydata, "Arsenal", window_size = 30)
+    # You can return a table if you extract specific stats from the rolling analysis function
+    # For now, return last few rows as sample
+    req(input$team_selected_rolling)
+    team_data <- mydata %>%
+      filter(HomeTeam == input$team_selected_rolling | AwayTeam == input$team_selected_rolling)
+    head(team_data, 5)
   })
 
 }
