@@ -5,6 +5,7 @@ source("analysis.R")
 # app.R
 library(shiny)
 library(ggplot2)
+library(plotly)
 library(dplyr)
 
 
@@ -184,10 +185,9 @@ ui <- fluidPage(
                   ),
                   
                   tabPanel("Seasonal Goal Trends",
-                           plotOutput("seasonal_goal_trends", width = "95%", height = "600px"),
+                           plotlyOutput("seasonal_goal_trends",height = "600px"),
                            tableOutput("seasonal_performance_table")
                   ),
-                  
                   tabPanel("Team Performance Over Time",
                            selectInput("team_selected_perf", "Select a Team:",
                                        choices = c("Man United", "Tottenham", "Arsenal", "Chelsea", "Everton", "Liverpool", 
@@ -202,19 +202,12 @@ ui <- fluidPage(
                            plotOutput("team_performance_plot", width = "95%", height = "600px"),
                            verbatimTextOutput("team_performance_table")
                   ),
-                  
                   tabPanel("Rolling Performance Analysis",
-                           selectInput("team_selected_rolling", "Select a Team:",
-                                       choices = c("Man United", "Tottenham", "Arsenal", "Chelsea", "Everton", "Liverpool", 
-                                                   "Newcastle", "Aston Villa", "West Ham", "Man City", "Southampton", "Leicester",
-                                                   "Fulham", "Blackburn", "Sunderland", "Crystal Palace", "Leeds", "Middlesbrough",
-                                                   "Bolton", "West Brom", "Wolves", "Stoke", "Norwich", "Burnley", "Coventry",
-                                                   "Charlton", "Watford", "Wigan", "Bournemouth", "Brighton", "Sheffield Weds",
-                                                   "Wimbledon", "Birmingham", "Derby", "Portsmouth", "Swansea", "Nott'm Forest",
-                                                   "QPR", "Sheffield United", "Hull", "Ipswich", "Brentford", "Reading", "Bradford",
-                                                   "Cardiff", "Huddersfield", "Oldham", "Swindon", "Barnsley", "Blackpool", "Luton",
-                                                   "Brighton & Hove Albion", "Ipswich Town")),
-                           plotOutput("rolling_performance_plot", width = "95%", height = "600px"),
+                           selectInput("team_select", "Select Team:",
+                                       choices = unique(c(mydata$HomeTeam, mydata$AwayTeam))),
+                           sliderInput("window_size", "Rolling Window Size:",
+                                       min = 3, max = 50, value = 10),
+                           plotlyOutput("rolling_performance_plot", height = "600px"),
                            tableOutput("rolling_performance_table")
                   ),
                   tabPanel("Variable Distribution",
@@ -499,7 +492,7 @@ server <- function(input, output) {
   })
   
   # Seasonal Goal Trends - Displaying the trends of selected teams over multiple seasons
-  output$seasonal_goal_trends <- renderPlot({
+  output$seasonal_goal_trends <- renderPlotly({
     seasonal_performance <- mydata %>%
       mutate(SeasonStart = as.numeric(substr(Season, 1, 4))) %>%
       filter(HomeTeam %in% selected_teams | AwayTeam %in% selected_teams) %>%
@@ -528,24 +521,16 @@ server <- function(input, output) {
       ) %>%
       filter(Matches >= 30)
     
-    ggplot(seasonal_performance, aes(x = SeasonStart, y = AvgGoalDiff)) +
-      geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-      geom_line(aes(color = Team), linewidth = 1) +
-      geom_point(aes(color = Team), size = 2) +
-      facet_wrap(~Team, ncol = 2) +
-      labs(
-        title = "Seasonal Goal Difference Trends",
-        x = "Season Start Year",
-        y = "Average Goal Difference per Match"
-      ) +
-      theme_minimal() +
-      theme(
-        strip.text = element_text(face = "bold"),
-        legend.position = "none"
-      )
+    plot_ly(seasonal_performance, x = ~SeasonStart, y = ~AvgGoalDiff, color = ~Team,
+            type = 'scatter', mode = 'lines+markers',
+            text = ~paste("Team:", Team, "<br>Season:", SeasonStart, "<br>Avg Goal Diff:", round(AvgGoalDiff, 2))) %>%
+      layout(title = "Seasonal Goal Difference Trends",
+             xaxis = list(title = "Season Start Year"),
+             yaxis = list(title = "Average Goal Difference per Match"),
+             hovermode = 'closest')
+    
   })
   
-  # Team Performance Over Time - Performance of teams over multiple seasons
   output$team_performance_plot <- renderPlot({
     req(input$team_selected_perf)
     team_performance(input$team_selected_perf)
@@ -555,9 +540,14 @@ server <- function(input, output) {
     paste("Displaying data for:", input$team_selected_perf)
   })
   
-  output$rolling_performance_plot <- renderPlot({
-    req(input$team_selected_rolling)
-    analyze_team_performance_over_time(mydata, input$team_selected_rolling, window_size = 30)
+  # Team Performance Over Time - Performance of teams over multiple seasons
+  output$rolling_performance_plot <- renderPlotly({
+    req(input$team_select)  # Wait until user selects a team
+    
+    plot <- analyze_team_performance_over_time(mydata, input$team_select, window_size = input$window_size)
+    
+    ggplotly(plot) %>%
+      style(line = list(width = 1))  # Convert ggplot to interactive plotly object
   })
   
   output$rolling_performance_table <- renderTable({
