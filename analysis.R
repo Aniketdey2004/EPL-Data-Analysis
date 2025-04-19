@@ -535,7 +535,7 @@ team_performance <- function(team_name, data = seasonal_performance) {
 
 team_performance("Arsenal")
 team_performance("Man City")
-
+team_performance("Chelsea")
 
 # Assuming your `mydata` data frame is already loaded and cleaned
 
@@ -584,4 +584,414 @@ analyze_team_performance_over_time <- function(data, team_name, window_size = 10
 
 analyze_team_performance_over_time(mydata, "Man United", window_size = 30)
 analyze_team_performance_over_time(mydata, "Arsenal", window_size = 30)
+analyze_team_performance_over_time(mydata,"Chelsea",window_size = 30)
 
+#exploring the variation in each numerical variables
+ggplot(mydata, aes(x = FTH.Goals)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Full Time Home Goals",
+       x = "Full Time Home Goals",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = FTH.Goals)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Full Time Home Goals",
+       y = "Full Time Home Goals") +
+  theme_minimal()
+
+ggplot(mydata, aes(x = FTH.Goals)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Full Time Home Goals",
+       x = "Full Time Home Goals",
+       y = "Density") +
+  theme_minimal()
+#The average home team scores between 0–2 goals most of the time.
+#Higher goal counts are rare but do occur (long tail).
+#The data is discrete, positively skewed, and has outliers on the higher side.
+
+ggplot(mydata, aes(x = FTA.Goals)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Full Time Away Goals",
+       x = "Full Time Away Goals",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = FTA.Goals)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Full Time Away Goals",
+       y = "Full Time Away Goals") +
+  theme_minimal() 
+
+ggplot(mydata, aes(x = FTA.Goals)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Full Time Away Goals",
+       x = "Full Time Away Goals",
+       y = "Density") +
+  theme_minimal()
+#The average away team scores between 0–2 goals most of the time.
+#Higher goal counts are rare but do occur (long tail).
+#The data is discrete, positively skewed, and has outliers on the higher side.
+
+ggplot(mydata, aes(x = H.Shots)) +
+  geom_histogram(binwidth = 2, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Home Shots",
+       x = "Home Shots",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = H.Shots)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Home Shots",
+       y = "Home Shots") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = H.Shots)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Home Shots",
+       x = "Home Shots",
+       y = "Density") +
+  theme_minimal()
+#Most home teams shoot around 10–14 times per match.
+#Few teams take 20+ shots, and those are uncommon or extreme matches.
+#The data is not normally distributed – it is skewed to the right.
+#Outliers (such as 30–40 shots) might warrant further investigation — maybe those were one-sided dominant performances.
+
+
+ggplot(mydata, aes(x = A.Shots)) +
+  geom_histogram(binwidth = 2, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Away Shots",
+       x = "Away Shots",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = A.Shots)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Away Shots",
+       y = "Away Shots") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = A.Shots)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Away Shots",
+       x = "Away Shots",
+       y = "Density") +
+  theme_minimal()
+#Most away teams shoot around 7–11 times per match.
+#Few teams take 20+ shots, and those are uncommon or extreme matches.
+#The data is not normally distributed – it is skewed to the right.
+#Outliers (such as 25-30 shots) might warrant further investigation — maybe those were one-sided dominant performances.
+
+
+ggplot(mydata, aes(x = H.SOT)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Home Shots on Target",
+       x = "Home Shots on Target",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = H.SOT)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Home Shots on Target",
+       y = "Home Shots on Target") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = H.SOT)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Home Shots on Target",
+       x = "Home Shots on Target",
+       y = "Density") +
+  theme_minimal()
+
+
+ggplot(mydata, aes(x = A.SOT)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Away Shots on Target",
+       x = "Away Shots on Target",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = A.SOT)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Away Shots on Target",
+       y = "Away Shots on Target") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = A.SOT)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Away Shots on Target",
+       x = "Away Shots on Target",
+       y = "Density") +
+  theme_minimal()
+
+
+ggplot(mydata, aes(x = H.Fouls)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Home Fouls",
+       x = "Home Fouls",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = H.Fouls)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Home Fouls",
+       y = "Home Fouls") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = H.Fouls)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Home Fouls",
+       x = "Home Fouls",
+       y = "Density") +
+  theme_minimal()
+
+
+
+ggplot(mydata, aes(x = A.Fouls)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Away Fouls",
+       x = "Away Fouls",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = A.Fouls)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Away Fouls",
+       y = "Away Fouls") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = A.Fouls)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Away Fouls",
+       x = "Away Fouls",
+       y = "Density") +
+  theme_minimal()
+
+
+ggplot(mydata, aes(x = H.Corners)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Home Corners",
+       x = "Home Corners",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = H.Corners)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Home Corners",
+       y = "Home Corners") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = H.Corners)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Home Corners",
+       x = "Home Corners",
+       y = "Density") +
+  theme_minimal()
+
+
+
+ggplot(mydata, aes(x = A.Corners)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Away Corners",
+       x = "Away Corners",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = A.Corners)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Away Corners",
+       y = "Away Corners") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = A.Corners)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Away Corners",
+       x = "Away Corners",
+       y = "Density") +
+  theme_minimal()
+
+
+ggplot(mydata, aes(x = H.Yellow)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Home Yellow Cards",
+       x = "Home Yellow Cards",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = H.Yellow)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Home Yellow Cards",
+       y = "Home Yellow Cards") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = H.Yellow)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Home Yellow Cards",
+       x = "Home Yellow Cards",
+       y = "Density") +
+  theme_minimal()
+
+ggplot(mydata, aes(x = H.Red)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Home Red Cards",
+       x = "Home Red Cards",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = H.Red)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Home Red Cards",
+       y = "Home Red Cards") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = H.Red)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Home Red Cards",
+       x = "Home Red Cards",
+       y = "Density") +
+  theme_minimal()
+
+
+
+ggplot(mydata, aes(x = A.Yellow)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Away Yellow Cards",
+       x = "Away Yellow Cards",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = A.Yellow)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Away Yellow Cards",
+       y = "Away Yellow Cards") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = A.Yellow)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Away Yellow Cards",
+       x = "Away Yellow Cards",
+       y = "Density") +
+  theme_minimal()
+
+
+ggplot(mydata, aes(x = A.Red)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  labs(title = "Histogram of Away Red Cards",
+       x = "Away Red Cards",
+       y = "Frequency") +
+  theme_minimal()
+
+ggplot(mydata, aes(y = A.Red)) +
+  geom_boxplot(fill = "orange", color = "black") +
+  labs(title = "Box Plot of Away Red Cards",
+       y = "Away Red Cards") +
+  theme_minimal() +
+  coord_flip()
+
+ggplot(mydata, aes(x = A.Red)) +
+  geom_density(fill = "purple", alpha = 0.7) +
+  labs(title = "Density Plot of Away Red Cards",
+       x = "Away Red Cards",
+       y = "Density") +
+  theme_minimal()
+
+
+#exploring the categorical variables
+season_counts <- mydata %>%
+  count(Season, name = "MatchCount") %>%
+  arrange(desc(MatchCount))
+
+ggplot(season_counts, aes(x = Season, y = MatchCount)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  labs(title = "Number of Matches per Season",
+       x = "Season",
+       y = "Number of Matches") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+
+season_proportions <- mydata %>%
+  count(Season, name = "MatchCount") %>%
+  mutate(Proportion = MatchCount / n()) %>%
+  arrange(desc(Proportion))
+
+ggplot(season_proportions, aes(x = Season, y = Proportion)) +
+  geom_bar(stat = "identity", fill = "lightcoral", color = "black") +
+  labs(title = "Proportion of Matches per Season",
+       x = "Season",
+       y = "Proportion of Matches") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) +
+  scale_y_continuous(labels = scales::percent) # Format y-axis as percentages
+
+
+ft_result_counts <- mydata %>%
+  count(FT.Result, name = "ResultCount")
+
+ggplot(ft_result_counts, aes(x = FT.Result, y = ResultCount)) +
+  geom_bar(stat = "identity", fill = "lightgreen", color = "black") +
+  labs(title = "Number of Matches per Full Time Result",
+       x = "Full Time Result (H=Home Win, A=Away Win, D=Draw)",
+       y = "Number of Matches") +
+  theme_minimal()
+
+
+ft_result_proportions <- mydata %>%
+  count(FT.Result, name = "ResultCount") %>%
+  mutate(Proportion = ResultCount / n())
+
+ggplot(ft_result_proportions, aes(x = FT.Result, y = Proportion)) +
+  geom_bar(stat = "identity", fill = "gold", color = "black") +
+  labs(title = "Proportion of Matches per Full Time Result",
+       x = "Full Time Result (H=Home Win, A=Away Win, D=Draw)",
+       y = "Proportion of Matches") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::percent)
+
+
+
+
+referee_counts <- mydata %>%
+  count(Referee, name = "MatchCount") %>%
+  arrange(desc(MatchCount))
+
+# Displaying the top 20 referees to avoid an overly long plot
+top_n <- 20
+top_referees <- referee_counts %>% slice_head(n = top_n)
+
+ggplot(top_referees, aes(x = reorder(Referee, MatchCount), y = MatchCount)) +
+  geom_bar(stat = "identity", fill = "lightsalmon", color = "black") +
+  coord_flip() + # Flip for better readability of referee names
+  labs(title = paste("Top", top_n, "Referees by Number of Matches"),
+       y = "Number of Matches",
+       x = "Referee") +
+  theme_minimal()
+
+referee_proportions <- mydata %>%
+  count(Referee, name = "MatchCount") %>%
+  mutate(Proportion = MatchCount / n()) %>%
+  arrange(desc(Proportion))
+
+# Displaying the top 20 referees by proportion
+top_n <- 20
+top_referee_proportions <- referee_proportions %>% slice_head(n = top_n)
+
+ggplot(top_referee_proportions, aes(x = reorder(Referee, Proportion), y = Proportion)) +
+  geom_bar(stat = "identity", fill = "plum", color = "black") +
+  coord_flip() +
+  labs(title = paste("Top", top_n, "Referees by Proportion of Matches"),
+       y = "Proportion of Matches",
+       x = "Referee") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::percent)
