@@ -493,56 +493,83 @@ ggplot(seasonal_performance, aes(x = SeasonStart, y = AvgGoalDiff)) +
     legend.position = "none"
   )
 
-team_performance <- function(team_name, data = seasonal_performance) {
-  if (!(team_name %in% unique(data$Team))) {
-    stop(paste("Team not found. Available teams:", 
-               paste(unique(data$Team), collapse = ", ")))
+team_performance <- function(team_name, data = mydata) {
+  # Check if the team exists in the dataset
+  all_teams <- unique(c(data$HomeTeam, data$AwayTeam))
+  if (!(team_name %in% all_teams)) {
+    stop(paste("Team not found. Available teams:",
+               paste(unique(all_teams), collapse = ", ")))
   }
+  
+  # Define team color palette (fallback to black for unknown teams)
   team_colors <- c(
     "Arsenal" = "#EF0107",
     "Chelsea" = "#034694",
     "Liverpool" = "#C8102E",
     "Man United" = "#DA291C",
     "Man City" = "#6CABDD",
-    "Tottenham" = "#132257"
+    "Tottenham" = "#132257",
+    "default" = "black"
   )
+  team_color <- team_colors[team_name]
+  if (is.na(team_color)) team_color <- team_colors["default"]
   
-  team_data <- data %>% 
-    filter(Team == team_name)
+  # Process data specifically for the selected team
+  team_data <- data %>%
+    mutate(SeasonStart = as.numeric(substr(Season, 1, 4))) %>%
+    filter(HomeTeam == team_name | AwayTeam == team_name) %>%
+    mutate(
+      Team = team_name,
+      Points = case_when(
+        FT.Result == "H" & HomeTeam == team_name ~ 3,
+        FT.Result == "A" & AwayTeam == team_name ~ 3,
+        FT.Result == "D" ~ 1,
+        TRUE ~ 0
+      ),
+      GoalDifference = ifelse(HomeTeam == team_name,
+                              FTH.Goals - FTA.Goals,
+                              FTA.Goals - FTH.Goals)
+    ) %>%
+    group_by(SeasonStart) %>%
+    summarise(
+      AvgPoints = mean(Points),
+      AvgGoalDiff = abs(mean(GoalDifference)),
+      Matches = n(),
+      .groups = "drop"
+    ) %>%
+    filter(Matches >= 30)
   
+  # Plot the performance
   ggplot(team_data, aes(x = SeasonStart)) +
-    geom_area(aes(y = AvgGoalDiff), 
-              fill = team_colors[team_name], 
+    geom_area(aes(y = AvgGoalDiff),
+              fill = team_color,
               alpha = 0.3) +
-    geom_line(aes(y = AvgPoints * 2),  # Scaled for dual-axis
-              color = team_colors[team_name], 
+    geom_line(aes(y = AvgPoints * 2),
+              color = team_color,
               linewidth = 1.5) +
     geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-    geom_hline(yintercept = 2 * 1.8, linetype = "dashed", color = "gold") +  # UCL threshold
-    
+    geom_hline(yintercept = 2 * 1.8, linetype = "dashed", color = "gold") +
     scale_y_continuous(
       name = "Average Goal Difference",
       sec.axis = sec_axis(~./2, name = "Average Points per Match")
     ) +
-    
-    
     labs(
       title = paste(team_name, "Performance Over Time"),
       subtitle = "Goal Difference (area) vs. Points per Match (line)",
       x = "Season Start Year",
-      caption = paste("Data from", min(data$SeasonStart), "-", max(data$SeasonStart))
+      caption = paste("Data from", min(team_data$SeasonStart), "-", max(team_data$SeasonStart))
     ) +
     theme_minimal() +
     theme(
-      plot.title = element_text(face = "bold", size = 16, color = team_colors[team_name]),
-      axis.title.y.right = element_text(color = team_colors[team_name]),
-      axis.text.y.right = element_text(color = team_colors[team_name])
+      plot.title = element_text(face = "bold", size = 16, color = team_color),
+      axis.title.y.right = element_text(color = team_color),
+      axis.text.y.right = element_text(color = team_color)
     )
 }
 
-team_performance("Arsenal")
-team_performance("Man City")
-team_performance("Chelsea")
+team_performance("Arsenal",mydata)
+team_performance("Man City",mydata)
+team_performance("Chelsea",mydata)
 
 # Assuming your `mydata` data frame is already loaded and cleaned
 
