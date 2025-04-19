@@ -10,7 +10,7 @@ library(dplyr)
 
 # Define UI
 ui <- fluidPage(
-  titlePanel("Football Match Analysis Dashboard"),
+  titlePanel("EPL Match Analysis Dashboard"),
   sidebarLayout(
     sidebarPanel(
       conditionalPanel(
@@ -86,6 +86,42 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.tabs == 'Rolling Performance Analysis'",
         helpText("Analyzes the rolling performance of a team over a specified window size.")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Variable Distribution'",
+        helpText("Select a match statistic to view its distribution (Histogram, Boxplot, Density).")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Matches per Season'",
+        helpText("Analyzes the duration of every Season")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Match outcomes'",
+        helpText("Analyzes the distribution of different types of match outcomes")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Top 20 referees'",
+        helpText("Checking the top 20 referees by number of matches")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Variable Comparison'",
+        helpText("Select two numerical match statistic to view their correlation.")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Correlation Matrix'",
+        helpText("Correlation Matrix of Numerical Variables.")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Numerical and Categorical Comparison'",
+        helpText("Select one numerical match statistic and one categorical match statistic to view their correlation.")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Categorical Variable Comparison'",
+        helpText("Comparison between two Categorical Variable.")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Full Time Result by Referees'",
+        helpText("Analyzing the Full Time Result by Referee (Top 10 Strict Referees)")
       )
     ),
     mainPanel(
@@ -180,7 +216,56 @@ ui <- fluidPage(
                                                    "Brighton & Hove Albion", "Ipswich Town")),
                            plotOutput("rolling_performance_plot", width = "95%", height = "600px"),
                            tableOutput("rolling_performance_table")
-                  )
+                  ),
+                  tabPanel("Variable Distribution",
+                           selectInput("selected_var", "Choose Variable:",
+                                       choices = c("FTH.Goals", "FTA.Goals", "H.Shots", "A.Shots", 
+                                                   "H.SOT", "A.SOT", "H.Fouls", "A.Fouls", 
+                                                   "H.Yellow", "A.Yellow", "H.Red", "A.Red", 
+                                                   "H.Corners", "A.Corners")),
+                           plotOutput("varDistPlot", width = "95%", height = "1000px")
+                  ),
+                  tabPanel("Matches per Season",
+                           plotOutput("season_counts", width = "95%", height = "1000px")
+                  ),
+                  tabPanel("Match outcomes",
+                           plotOutput("match_outcomes", width = "95%", height = "1000px")
+                  ),
+                  tabPanel("Top 20 referees",
+                           plotOutput("referee", width = "95%", height = "1000px")
+                  ),
+                  tabPanel("Variable Comparison",
+                           selectInput("selected_var_x", "Choose Variable:",
+                                       choices = c("FTH.Goals", "FTA.Goals", "H.Shots", "A.Shots", 
+                                                   "H.SOT", "A.SOT", "H.Fouls", "A.Fouls", 
+                                                   "H.Yellow", "A.Yellow", "H.Red", "A.Red", 
+                                                   "H.Corners", "A.Corners")),
+                           selectInput("selected_var_y", "Choose Variable:",
+                                       choices = c("FTH.Goals", "FTA.Goals", "H.Shots", "A.Shots", 
+                                                   "H.SOT", "A.SOT", "H.Fouls", "A.Fouls", 
+                                                   "H.Yellow", "A.Yellow", "H.Red", "A.Red", 
+                                                   "H.Corners", "A.Corners")),
+                           plotOutput("varCompPlot", width = "95%", height = "1000px")
+                  ),
+                  tabPanel("Correlation Matrix",
+                           plotOutput("correlation_matrix", width = "95%", height = "1000px")
+                  ),
+                  tabPanel("Numerical and Categorical Comparison",
+                           selectInput("selected_num_var", "Choose Variable:",
+                                       choices = c("FTH.Goals", "FTA.Goals", "H.Shots", "A.Shots", 
+                                                   "H.SOT", "A.SOT", "H.Fouls", "A.Fouls", 
+                                                   "H.Yellow", "A.Yellow", "H.Red", "A.Red", 
+                                                   "H.Corners", "A.Corners")),
+                           selectInput("selected_cat_var", "Choose Variable:",
+                                       choices = c("FT.Result", "HT.Result")),
+                           plotOutput("num_vs_cat_Plot", width = "95%", height = "1000px")
+                  ),
+                  tabPanel("Categorical Variable Comparison",
+                           plotOutput("ft_result_by_top_seasons", width = "95%", height = "1000px")
+                  ),
+                  tabPanel("Full Time Result by Referees",
+                           plotOutput("ft_result_by_referee", width = "95%", height = "1000px")
+                  ),
                   
       )
     )
@@ -483,7 +568,88 @@ server <- function(input, output) {
       filter(HomeTeam == input$team_selected_rolling | AwayTeam == input$team_selected_rolling)
     head(team_data, 5)
   })
-
+  
+  output$varDistPlot <- renderPlot({
+    req(input$selected_var)
+    plot_var_dist(mydata2, input$selected_var)
+  })
+  
+  output$season_counts <- renderPlot({
+    ggplot(season_counts, aes(x = Season, y = MatchCount)) +
+      geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+      labs(title = "Number of Matches per Season",
+           x = "Season",
+           y = "Number of Matches") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+  })
+  
+  output$match_outcomes <- renderPlot({
+    plot_ft_result_counts(mydata)
+  })
+  
+  output$referee <- renderPlot({
+    plot_top_referees(mydata)
+  })
+  
+  output$varCompPlot <- renderPlot({
+    req(input$selected_var_x,input$selected_var_y)
+    analyze_relationship(mydata,input$selected_var_x,input$selected_var_y)
+  })
+  
+  output$correlation_matrix <- renderPlot({
+    numerical_data <- mydata[sapply(mydata, is.numeric)]
+    correlation_matrix <- cor(numerical_data, use = "complete.obs")
+    corrplot::corrplot(correlation_matrix, method = "number", type = "upper")
+  })
+  
+  output$num_vs_cat_Plot <- renderPlot({
+    req(input$selected_num_var,input$selected_cat_var)
+    plot_box_by_category(mydata,input$selected_num_var,input$selected_cat_var)
+  })
+  
+  output$ft_result_by_top_seasons <- renderPlot({
+    top_seasons <- names(sort(table(mydata$Season), decreasing = TRUE)[1:5])
+    
+    result_by_season <- mydata %>%
+      filter(Season %in% top_seasons) %>%
+      group_by(Season, FT.Result) %>%
+      summarise(Count = n(), .groups = 'drop')
+    
+    ggplot(result_by_season, aes(x = Season, y = Count, fill = FT.Result)) +
+      geom_bar(stat = "identity", position = "dodge") +
+      labs(title = "Full Time Result by Top Seasons",
+           x = "Season",
+           y = "Number of Matches",
+           fill = "Full Time Result") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })
+  
+  output$ft_result_by_referee <- renderPlot({
+    referee <- referee %>% slice_head(n = 10)
+    top_10_referees <- referee$Referee
+    
+    ftr_distribution <- mydata %>%
+      filter(Referee %in% top_10_referees) %>%
+      group_by(Referee, FT.Result) %>%
+      summarise(MatchCount = n(), .groups = "drop") %>%
+      tidyr::complete(Referee, FT.Result = c("H", "D", "A"), fill = list(MatchCount = 0)) %>%
+      mutate(FT.Result = factor(FT.Result, levels = c("H", "D", "A")))
+    
+    ggplot(ftr_distribution, aes(x = Referee, y = MatchCount, fill = FT.Result)) +
+      geom_bar(stat = "identity", position = position_dodge(width = 0.7)) +
+      scale_fill_manual(values = c("H" = "#66a3ff", "D" = "#33cc33", "A" = "#ff6666")) +
+      labs(
+        title = "Full Time Result by Referee (Top 10 Strict Referees)",
+        x = "Referee",
+        y = "Number of Matches",
+        fill = "Full Time Result"
+      ) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })
+  
 }
 
 shinyApp(ui = ui, server = server)
