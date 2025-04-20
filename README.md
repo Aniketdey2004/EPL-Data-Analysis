@@ -88,15 +88,21 @@ The dataset includes match-level statistics such as:
 
 ## ✅ Key Takeaways
 
-- **Home Advantage is Real:** Home teams generally score more, shoot more, and win more.
-- **Shots on Target Are Key:** High correlation with goals, outperforming total shots as a predictor.
-- **Corners Reflect Dominance:** Strong link between corners and offensive pressure leading to goals.
-- **Dirty Play Patterns:** Outliers in red/yellow cards show aggression under pressure, often from home teams.
-- **Referee Influence Exists:** A few referees officiate disproportionately high numbers of matches.
-- **Performance Fluctuations:** Teams and matches vary significantly season-to-season, making rolling and seasonal trends critical.
-- **Goal-Driven Results:** Goals, especially full-time goals, are the most predictive features for match outcomes.
-- **Clean Play Not Always Rewarded:** Fouls and cards do not directly correlate with match results.
-- **Consistent Patterns Across Seasons:** Despite varying lengths of seasons, the distribution of performance metrics remains stable.
+- Man United and Tottenham have played the most home matches in Premier League history, with 604 each. Traditional top clubs like Arsenal, Chelsea, Everton, and Liverpool closely follow
+- Arsenal, Chelsea, Everton, Liverpool, Man United, and Tottenham have each played over 600 away matches, reflecting their consistent presence in the Premier League.
+- Man United, Arsenal, and Liverpool dominate both home and away goal stats, showing consistent attacking strength. Man City holds the highest home goal difference (+579), emphasizing their strong home advantage. Most teams perform significantly better at home, indicating a clear home advantage trend in the league.
+- Man United (2259), Arsenal (2197), and Liverpool (2168) lead the all-time scoring charts
+- Man United, Arsenal, and Liverpool top the home win rate charts, turning their stadiums into consistent fortresses. Liverpool and Man City closely follow, reinforcing the dominance of traditional and modern top-six clubs at home
+- Man United, Chelsea, and Arsenal boast the highest away win percentages, showing strong adaptability and control on the road. Man City and Liverpool also excel away from home
+- Man United, Arsenal, and Liverpool emerge as the most successful teams overall, driven by high goal output and strong win rates both home and away
+- Teams like Fulham, Stoke, and Newcastle show the strongest home advantage, winning over 20% more matches at home than away
+- Bournemouth, Bolton, and Birmingham rank among the highest in average yellow cards, indicating a more aggressive or physical play style
+- Hull, Stoke, and Wolves top the list of ‘dirtiest’ teams, based on a composite score likely reflecting yellow/red cards and fouls
+- D Coote, M Dean, and M Riley are among the strictest EPL referees.
+- Manchester United, Tottenham, and Arsenal lead the league in comeback wins after trailing at half-time. These clubs consistently demonstrate strong mentality and second-half dominance to overturn deficits.
+- Man United,Arsenal and liverpool has the highest number of wins by playing fairly in comparison to their rival teams
+- Man City dominate in recent years, with both achieving consistently high average goal differences per match—particularly post-2010, reflecting their Premier League success. Man United maintained strong numbers in the late '90s and early 2000s, with a slight decline post-2013 (post-Ferguson era).
+
 
 ---
 
