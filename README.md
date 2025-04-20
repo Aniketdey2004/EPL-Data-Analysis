@@ -113,8 +113,11 @@ The dataset includes match-level statistics such as:
 
 ## 🧠 Author
 
-Analysis conducted by [Your Name], April 2025  
-For queries or collaboration, feel free to reach out.
+Analysis conducted by Team Dexter, April 2025  
+Pradyumna Bhowmick (Leader) 
+Piyush Kumar Bharti 
+Aniket Dey 
+Aarav Raj 
 
 ---
 
